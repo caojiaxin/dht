@@ -5,6 +5,7 @@ import be.adaxisoft.bencode.BEncodedValue;
 import com.mongodb.client.*;
 import me.zpq.dht.MetaInfo;
 import me.zpq.dht.util.Utils;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.bson.*;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
@@ -28,8 +29,9 @@ public class MongoMetaInfoImpl implements MetaInfo {
     }
 
     @Override
-    public void todoSomething(byte[] sha1, byte[] info) throws IOException {
+    public void todoSomething(byte[] info) throws IOException {
 
+        byte[] sha1 = DigestUtils.sha1(info);
         if (this.isExist(sha1)) {
 
             return;
@@ -81,15 +83,15 @@ public class MongoMetaInfoImpl implements MetaInfo {
     }
 
     @Override
-    public void onAnnouncePeer(String host, Integer port, byte[] sha1) {
+    public void onAnnouncePeer(String host, Integer port, byte[] hash) {
 
-        if (this.isExist(sha1)) {
+        if (this.isExist(hash)) {
 
             return;
         }
         try (Jedis jedis = jedisPool.getResource()) {
 
-            String infoHash = Utils.bytesToHex(sha1);
+            String infoHash = Utils.bytesToHex(hash);
 
             jedis.sadd("meta_info", String.join(":", host, infoHash, String.valueOf(port)));
         }

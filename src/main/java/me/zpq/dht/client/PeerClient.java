@@ -56,17 +56,14 @@ public class PeerClient {
             this.handshake(outputStream);
             if (!this.validatorHandshake(inputStream)) {
 
-                LOGGER.error("validatorHandShake false");
                 return;
             }
             LOGGER.info("handshake success");
             LOGGER.info("try to extHandShake");
             this.extHandShake(outputStream);
             BEncodedValue bEncodedValue = this.validatorExtHandShake(inputStream);
-
             if (bEncodedValue == null) {
 
-                LOGGER.error("validatorExtHandShake false");
                 return;
             }
             LOGGER.info("extHandShake success");
@@ -112,19 +109,15 @@ public class PeerClient {
                 }
             }
             LOGGER.info("success");
-            metaInfoTodo.todoSomething(this.infoHash, info);
+            metaInfoTodo.todoSomething(info);
 
         } catch (TryAgainException e) {
 
             throw e;
 
-        } catch (IOException e) {
-
-            LOGGER.error("IOException {}", e.getMessage());
-
         } catch (Exception e) {
 
-            LOGGER.error("Exception {}", e.getMessage());
+            LOGGER.error("{} : {}", e.getClass().getName(), e.getMessage());
         }
 
     }

@@ -5,6 +5,7 @@ import be.adaxisoft.bencode.BEncodedValue;
 import be.adaxisoft.bencode.BEncoder;
 import me.zpq.dht.MetaInfo;
 import me.zpq.dht.exception.TryAgainException;
+import me.zpq.dht.util.Utils;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,9 +48,8 @@ public class PeerClient {
             socket.setSoTimeout(60 * 1000);
             socket.setTcpNoDelay(true);
             socket.setKeepAlive(true);
-            LOGGER.info("start connect server host: {} port: {}", host, port);
+            LOGGER.info("connect server host: {} port: {} hash: {}", host, port, Utils.bytesToHex(this.infoHash));
             socket.connect(new InetSocketAddress(host, port), 30000);
-            LOGGER.info("connect success");
             OutputStream outputStream = socket.getOutputStream();
             InputStream inputStream = socket.getInputStream();
             LOGGER.info("try to handshake");
@@ -58,7 +58,6 @@ public class PeerClient {
 
                 return;
             }
-            LOGGER.info("handshake success");
             LOGGER.info("try to extHandShake");
             this.extHandShake(outputStream);
             BEncodedValue bEncodedValue = this.validatorExtHandShake(inputStream);
@@ -66,21 +65,17 @@ public class PeerClient {
 
                 return;
             }
-            LOGGER.info("extHandShake success");
             int utMetadata = bEncodedValue.getMap().get("m").getMap().get("ut_metadata").getInt();
             int metaDataSize = bEncodedValue.getMap().get("metadata_size").getInt();
             // metaDataSize / 16384
             int block = metaDataSize % 16384 > 0 ? metaDataSize / 16384 + 1 : metaDataSize / 16384;
             LOGGER.info("metaDataSize: {} block: {}", metaDataSize, block);
-            LOGGER.info("start request block");
             for (int i = 0; i < block; i++) {
 
                 this.metadataRequest(outputStream, utMetadata, i);
                 LOGGER.info("request block index: {} ok", i);
             }
-            LOGGER.info("request block finish");
             ByteBuffer metaInfo = ByteBuffer.allocate(metaDataSize);
-            LOGGER.info("start resolve block");
             for (int i = 0; i < block; i++) {
 
                 Map<String, BEncodedValue> m = new HashMap<>(6);
@@ -93,7 +88,6 @@ public class PeerClient {
                 metaInfo.put(Arrays.copyOfRange(result, response.length + 2, result.length));
                 LOGGER.info("resolve block index: {} ok", i);
             }
-            LOGGER.info("resolve block all finish");
             LOGGER.info("validator sha1");
             byte[] info = metaInfo.array();
             byte[] sha1 = DigestUtils.sha1(info);

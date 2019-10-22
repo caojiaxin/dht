@@ -51,8 +51,8 @@ public class Main {
         properties.load(inputStream);
         String host = properties.getProperty("serverIp");
         Integer port = Integer.valueOf(properties.getProperty("serverPort"));
-        String peerId = properties.getProperty("peerId");
-        byte[] transactionId = properties.getProperty("transactionID").getBytes();
+        byte[] transactionId = new byte[5];
+        new Random().nextBytes(transactionId);
         Integer minNodes = Integer.valueOf(properties.getProperty("minNodes"));
         Integer maxNodes = Integer.valueOf(properties.getProperty("maxNodes"));
         int timeout = Integer.parseInt(properties.getProperty("timeout"));
@@ -95,7 +95,7 @@ public class Main {
         ThreadFactory threadFactory = Executors.defaultThreadFactory();
         ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(corePoolSize, maximumPoolSize,
                 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), threadFactory);
-        scheduledExecutorService.scheduleWithFixedDelay(new Peer(threadPoolExecutor, mongoMetaInfo, jedisPool, peerId), 2, 2, TimeUnit.SECONDS);
+        scheduledExecutorService.scheduleWithFixedDelay(new Peer(threadPoolExecutor, mongoMetaInfo, jedisPool), 2, 2, TimeUnit.SECONDS);
         LOGGER.info("start ok peerRequestTask");
         LOGGER.info("server ok");
     }

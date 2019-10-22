@@ -20,19 +20,21 @@ public class Peer implements Runnable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Peer.class);
 
+    /**
+     * @see <a href="http://www.bittorrent.org/beps/bep_0020.html">Peer ID Conventions</>
+     */
+    private static final String PEER_ID = "-WW0001-123456789012";
+
     private ThreadPoolExecutor threadPoolExecutor;
 
     private MetaInfo mongoMetaInfo;
 
     private JedisPool jedisPool;
 
-    private String peerId;
-
-    public Peer(ThreadPoolExecutor threadPoolExecutor, MetaInfo metaInfo, JedisPool jedisPool, String peerId) {
+    public Peer(ThreadPoolExecutor threadPoolExecutor, MetaInfo metaInfo, JedisPool jedisPool) {
         this.threadPoolExecutor = threadPoolExecutor;
         this.mongoMetaInfo = metaInfo;
         this.jedisPool = jedisPool;
-        this.peerId = peerId;
     }
 
     @Override
@@ -59,7 +61,7 @@ public class Peer implements Runnable {
             LOGGER.info("ip {} port {} infoHash {}", ip, port, info[1]);
             threadPoolExecutor.execute(() -> {
 
-                PeerClient peerClient = new PeerClient(ip, port, peerId, infoHash, mongoMetaInfo);
+                PeerClient peerClient = new PeerClient(ip, port, PEER_ID, infoHash, mongoMetaInfo);
                 try {
 
                     LOGGER.info("todo request peerClient ......");

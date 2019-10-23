@@ -96,7 +96,7 @@ public class Main {
         ThreadFactory threadFactory = Executors.defaultThreadFactory();
         ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(corePoolSize, maximumPoolSize,
                 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), threadFactory);
-        scheduledExecutorService.scheduleWithFixedDelay(new Peer(threadPoolExecutor, metaInfo, jedisPool), 2, 2, TimeUnit.SECONDS);
+        scheduledExecutorService.scheduleWithFixedDelay(new Peer(threadPoolExecutor, metaInfo, jedisPool), 5, 5, TimeUnit.SECONDS);
         LOGGER.info("start ok peerRequestTask");
         LOGGER.info("server ok");
     }

@@ -49,18 +49,19 @@ public class Main {
         InputStream inputStream = Files.newInputStream(Paths.get(url.getFile()));
         Properties properties = new Properties();
         properties.load(inputStream);
-        String host = properties.getProperty("serverIp");
-        Integer port = Integer.valueOf(properties.getProperty("serverPort"));
+        String host = properties.getProperty("server.ip");
+        Integer port = Integer.valueOf(properties.getProperty("server.port"));
         byte[] transactionId = new byte[5];
         new Random().nextBytes(transactionId);
-        Integer minNodes = Integer.valueOf(properties.getProperty("minNodes"));
-        Integer maxNodes = Integer.valueOf(properties.getProperty("maxNodes"));
-        int timeout = Integer.parseInt(properties.getProperty("timeout"));
-        int corePoolSize = Integer.parseInt(properties.getProperty("corePoolSize"));
-        int maximumPoolSize = Integer.parseInt(properties.getProperty("maximumPoolSize"));
+        Integer minNodes = Integer.valueOf(properties.getProperty("server.nodes.min"));
+        Integer maxNodes = Integer.valueOf(properties.getProperty("server.nodes.max"));
+        int timeout = Integer.parseInt(properties.getProperty("server.nodes.timeout"));
+        int corePoolSize = Integer.parseInt(properties.getProperty("server.peers.core.pool.size"));
+        int maximumPoolSize = Integer.parseInt(properties.getProperty("server.peers.maximum.pool.size"));
         String redisHost = properties.getProperty("redis.host");
         int redisPort = Integer.parseInt(properties.getProperty("redis.port"));
         String redisPassword = properties.getProperty("redis.password");
+        String mongoUri = properties.getProperty("mongodb.uri");
         inputStream.close();
         GenericObjectPoolConfig genericObjectPoolConfig = new GenericObjectPoolConfig();
         genericObjectPoolConfig.setMaxTotal(maximumPoolSize * 2);
@@ -71,11 +72,11 @@ public class Main {
         byte[] nodeId = Utils.nodeId();
         Map<String, NodeTable> table = new Hashtable<>();
         table.put(new String(nodeId), new NodeTable(Utils.bytesToHex(nodeId), host, port, System.currentTimeMillis()));
-        MetaInfo mongoMetaInfo = new MongoMetaInfoImpl(jedisPool, "mongodb://localhost");
+        MetaInfo metaInfo = new MongoMetaInfoImpl(jedisPool, mongoUri);
         bootstrap.group(new NioEventLoopGroup())
                 .channel(NioDatagramChannel.class)
                 .option(ChannelOption.SO_BROADCAST, true)
-                .handler(new DiscardServerHandler(table, nodeId, maxNodes, mongoMetaInfo));
+                .handler(new DiscardServerHandler(table, nodeId, maxNodes, metaInfo));
         final Channel channel = bootstrap.bind(host, port).sync().channel();
 
         ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(5);
@@ -95,7 +96,7 @@ public class Main {
         ThreadFactory threadFactory = Executors.defaultThreadFactory();
         ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(corePoolSize, maximumPoolSize,
                 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), threadFactory);
-        scheduledExecutorService.scheduleWithFixedDelay(new Peer(threadPoolExecutor, mongoMetaInfo, jedisPool), 2, 2, TimeUnit.SECONDS);
+        scheduledExecutorService.scheduleWithFixedDelay(new Peer(threadPoolExecutor, metaInfo, jedisPool), 2, 2, TimeUnit.SECONDS);
         LOGGER.info("start ok peerRequestTask");
         LOGGER.info("server ok");
     }

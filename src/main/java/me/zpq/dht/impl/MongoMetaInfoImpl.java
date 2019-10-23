@@ -38,7 +38,7 @@ public class MongoMetaInfoImpl implements MetaInfo {
         }
         BEncodedValue decode = BDecoder.decode(new ByteArrayInputStream(info));
         Document metaInfo = new Document();
-        metaInfo.put("sha1", new BsonBinary(sha1));
+        metaInfo.put("hash", new BsonBinary(sha1));
         String name = decode.getMap().get("name").getString();
         if (decode.getMap().get("name.utf-8") != null) {
 
@@ -100,7 +100,7 @@ public class MongoMetaInfoImpl implements MetaInfo {
     private Boolean isExist(byte[] sha1) {
 
         Document has = new Document();
-        has.put("sha1", new BsonBinary(sha1));
+        has.put("hash", new BsonBinary(sha1));
         FindIterable<Document> documents = document.find(has);
         Document first = documents.first();
         return first != null;

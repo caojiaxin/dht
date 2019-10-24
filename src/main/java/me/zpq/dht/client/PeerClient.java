@@ -24,6 +24,12 @@ public class PeerClient {
 
     private static final String PROTOCOL = "BitTorrent protocol";
 
+    private static final String M = "m";
+
+    private static final String UT_METADATA = "ut_metadata";
+
+    private static final String METADATA_SIZE = "metadata_size";
+
     private String host;
 
     private int port;
@@ -65,8 +71,8 @@ public class PeerClient {
 
                 return;
             }
-            int utMetadata = bEncodedValue.getMap().get("m").getMap().get("ut_metadata").getInt();
-            int metaDataSize = bEncodedValue.getMap().get("metadata_size").getInt();
+            int utMetadata = bEncodedValue.getMap().get(M).getMap().get(UT_METADATA).getInt();
+            int metaDataSize = bEncodedValue.getMap().get(METADATA_SIZE).getInt();
             // metaDataSize / 16384
             int block = metaDataSize % 16384 > 0 ? metaDataSize / 16384 + 1 : metaDataSize / 16384;
             LOGGER.info("metaDataSize: {} block: {}", metaDataSize, block);
@@ -184,22 +190,22 @@ public class PeerClient {
         }
         byte[] bDecode = Arrays.copyOfRange(data, 2, length);
         BEncodedValue decode = BDecoder.decode(new ByteArrayInputStream(bDecode));
-        if (decode.getMap().get("metadata_size") == null) {
+        if (decode.getMap().get(METADATA_SIZE) == null) {
 
             LOGGER.error("metadata_size == null");
             return null;
         }
-        if (decode.getMap().get("metadata_size").getLong() <= 0) {
+        if (decode.getMap().get(METADATA_SIZE).getInt() <= 0) {
 
             LOGGER.error("metadata_size <= 0");
             return null;
         }
-        if (decode.getMap().get("m") == null) {
+        if (decode.getMap().get(M) == null) {
 
             LOGGER.error("m == null");
             return null;
         }
-        if (decode.getMap().get("m").getMap().get("ut_metadata") == null) {
+        if (decode.getMap().get(M).getMap().get(UT_METADATA) == null) {
 
             LOGGER.error("m.ut_metadata == null");
             return null;

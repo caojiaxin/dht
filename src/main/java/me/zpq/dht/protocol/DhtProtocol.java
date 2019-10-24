@@ -16,8 +16,6 @@ import java.util.Map;
  */
 public class DhtProtocol {
 
-    private String v = "UT";
-
     private byte[] result(Map<String, BEncodedValue> document) throws IOException {
 
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -32,7 +30,6 @@ public class DhtProtocol {
         document.put("y", new BEncodedValue("q"));
         document.put("q", new BEncodedValue(q));
         document.put("a", new BEncodedValue(a));
-        document.put("v", new BEncodedValue(v));
         return this.result(document);
     }
 
@@ -42,7 +39,6 @@ public class DhtProtocol {
         document.put("t", new BEncodedValue(transactionId));
         document.put("y", new BEncodedValue("r"));
         document.put("r", new BEncodedValue(r));
-        document.put("v", new BEncodedValue(v));
         return this.result(document);
 
     }
@@ -56,7 +52,6 @@ public class DhtProtocol {
         list.add(new BEncodedValue(code));
         list.add(new BEncodedValue(description));
         document.put("e", new BEncodedValue(list));
-        document.put("v", new BEncodedValue(v));
         return this.result(document);
     }
 

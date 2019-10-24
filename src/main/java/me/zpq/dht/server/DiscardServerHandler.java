@@ -211,11 +211,10 @@ public class DiscardServerHandler extends SimpleChannelInboundHandler<DatagramPa
 
             return;
         }
-        nodeTableList.forEach(nodeTable -> {
-
+        nodeTableList.forEach(nodeTable ->
             this.nodeTable.put(nodeTable.getNid(), new NodeTable(nodeTable.getNid(), nodeTable.getIp(),
-                    nodeTable.getPort(), System.currentTimeMillis()));
-        });
+                    nodeTable.getPort(), System.currentTimeMillis()))
+        );
 
     }
 

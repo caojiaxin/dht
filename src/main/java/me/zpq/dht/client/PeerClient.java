@@ -22,6 +22,11 @@ public class PeerClient {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PeerClient.class);
 
+    /**
+     * @see <a href="http://www.bittorrent.org/beps/bep_0020.html">Peer ID Conventions</>
+     */
+    private static final String PEER_ID = "-WW0001-123456789012";
+
     private static final String PROTOCOL = "BitTorrent protocol";
 
     private static final String M = "m";
@@ -34,16 +39,13 @@ public class PeerClient {
 
     private int port;
 
-    private String peerId;
-
     private byte[] infoHash;
 
     private MetaInfo metaInfoTodo;
 
-    public PeerClient(String host, int port, String peerId, byte[] infoHash, MetaInfo metaInfoTodo) {
+    public PeerClient(String host, int port, byte[] infoHash, MetaInfo metaInfoTodo) {
         this.host = host;
         this.port = port;
-        this.peerId = peerId;
         this.infoHash = infoHash;
         this.metaInfoTodo = metaInfoTodo;
     }
@@ -130,7 +132,7 @@ public class PeerClient {
                 .put(PROTOCOL.getBytes())
                 .put(extension)
                 .put(infoHash)
-                .put(peerId.getBytes());
+                .put(PEER_ID.getBytes());
         outputStream.write(handshake.array());
         outputStream.flush();
     }

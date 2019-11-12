@@ -35,6 +35,12 @@ public class PeerClient {
 
     private static final String METADATA_SIZE = "metadata_size";
 
+    private static final int CONNECT_TIMEOUT = 30 * 1000;
+
+    private static final int READ_TIMEOUT = 60 * 1000;
+
+    private static final int BLOCK_SIZE = 16384;
+
     private String host;
 
     private int port;
@@ -53,11 +59,11 @@ public class PeerClient {
     public void request() throws TryAgainException {
 
         try (Socket socket = new Socket()) {
-            socket.setSoTimeout(60 * 1000);
+            socket.setSoTimeout(READ_TIMEOUT);
             socket.setTcpNoDelay(true);
             socket.setKeepAlive(true);
             LOGGER.info("connect server host: {} port: {} hash: {}", host, port, Utils.bytesToHex(this.infoHash));
-            socket.connect(new InetSocketAddress(host, port), 30000);
+            socket.connect(new InetSocketAddress(host, port), CONNECT_TIMEOUT);
             OutputStream outputStream = socket.getOutputStream();
             InputStream inputStream = socket.getInputStream();
             LOGGER.info("try to handshake");
@@ -75,8 +81,7 @@ public class PeerClient {
             }
             int utMetadata = bEncodedValue.getMap().get(M).getMap().get(UT_METADATA).getInt();
             int metaDataSize = bEncodedValue.getMap().get(METADATA_SIZE).getInt();
-            // metaDataSize / 16384
-            int block = metaDataSize % 16384 > 0 ? metaDataSize / 16384 + 1 : metaDataSize / 16384;
+            int block = metaDataSize % BLOCK_SIZE > 0 ? metaDataSize / BLOCK_SIZE + 1 : metaDataSize / BLOCK_SIZE;
             LOGGER.info("metaDataSize: {} block: {}", metaDataSize, block);
             for (int i = 0; i < block; i++) {
 

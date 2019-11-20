@@ -42,9 +42,9 @@ public class Peer implements Runnable {
 
         try (Jedis jedis = jedisPool.getResource()) {
 
-            Long len = jedis.scard("meta_info");
+            Long len = jedis.scard(mongoMetaInfo.redisKey());
             LOGGER.info("redis len {}", len);
-            String metaInfo = jedis.spop("meta_info");
+            String metaInfo = jedis.spop(mongoMetaInfo.redisKey());
             if (metaInfo == null) {
 
                 return;
@@ -65,7 +65,7 @@ public class Peer implements Runnable {
 
                     LOGGER.warn("try to again. error:" + e.getMessage());
 
-                    jedis.sadd("meta_info", String.join(":", Arrays.asList(ip, Utils.bytesToHex(infoHash), String.valueOf(port))));
+                    jedis.sadd(mongoMetaInfo.redisKey(), String.join(":", Arrays.asList(ip, Utils.bytesToHex(infoHash), String.valueOf(port))));
                 }
             });
         } catch (Exception e) {

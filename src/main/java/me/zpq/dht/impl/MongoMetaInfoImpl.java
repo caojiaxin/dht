@@ -121,6 +121,12 @@ public class MongoMetaInfoImpl implements MetaInfo {
         }
     }
 
+    @Override
+    public String redisKey() {
+
+        return META_INFO;
+    }
+
     private Boolean isExist(byte[] sha1) {
 
         Document has = new Document();

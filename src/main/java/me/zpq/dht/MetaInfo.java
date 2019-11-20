@@ -11,4 +11,6 @@ public interface MetaInfo {
      * @param hash 文件sha1 长度20
      */
     void onAnnouncePeer(String host, Integer port, byte[] hash);
+
+    String redisKey();
 }

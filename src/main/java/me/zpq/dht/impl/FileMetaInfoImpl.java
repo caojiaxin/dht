@@ -131,6 +131,12 @@ public class FileMetaInfoImpl implements MetaInfo {
         }
     }
 
+    @Override
+    public String redisKey() {
+
+        return METADATA;
+    }
+
     private Boolean isExist(byte[] sha1) {
 
         Document has = new Document();

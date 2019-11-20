@@ -7,7 +7,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioDatagramChannel;
-import me.zpq.dht.impl.MongoMetaInfoImpl;
+import me.zpq.dht.impl.FileMetaInfoImpl;
 import me.zpq.dht.model.NodeTable;
 import me.zpq.dht.scheduled.FindNode;
 import me.zpq.dht.scheduled.Peer;
@@ -72,7 +72,7 @@ public class Main {
         byte[] nodeId = Utils.nodeId();
         Map<String, NodeTable> table = new Hashtable<>();
         table.put(new String(nodeId), new NodeTable(Utils.bytesToHex(nodeId), host, port, System.currentTimeMillis()));
-        MetaInfo metaInfo = new MongoMetaInfoImpl(jedisPool, mongoUri);
+        MetaInfo metaInfo = new FileMetaInfoImpl(jedisPool, mongoUri);
         bootstrap.group(new NioEventLoopGroup())
                 .channel(NioDatagramChannel.class)
                 .option(ChannelOption.SO_BROADCAST, true)

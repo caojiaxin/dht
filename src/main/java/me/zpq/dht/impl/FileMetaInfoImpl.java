@@ -63,13 +63,15 @@ public class FileMetaInfoImpl implements MetaInfo {
 
             return;
         }
-        String dir = "/" + METADATA + "/" + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
+        String date = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
+        String dir = "/" + METADATA + "/" + date;
         if (!Files.exists(Paths.get(dir))) {
 
             Files.createDirectories(Paths.get(dir));
         }
         String hex = Utils.bytesToHex(sha1);
-        OutputStream outputStream = Files.newOutputStream(Paths.get(dir + "/" + hex + ".info"));
+        String fileName = hex + ".info";
+        OutputStream outputStream = Files.newOutputStream(Paths.get(dir + "/" + fileName));
         outputStream.write(info);
         outputStream.close();
         BEncodedValue decode = BDecoder.decode(new ByteArrayInputStream(info));
@@ -113,6 +115,7 @@ public class FileMetaInfoImpl implements MetaInfo {
             }
             metaInfo.put(FILES, bsonArray);
         }
+        metaInfo.put(PATH, date + "/" + fileName);
         document.insertOne(metaInfo);
     }
 

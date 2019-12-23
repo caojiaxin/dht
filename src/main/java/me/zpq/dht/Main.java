@@ -63,11 +63,7 @@ public class Main {
         String redisPassword = properties.getProperty("redis.password");
         String mongoUri = properties.getProperty("mongodb.uri");
         inputStream.close();
-        GenericObjectPoolConfig genericObjectPoolConfig = new GenericObjectPoolConfig();
-        genericObjectPoolConfig.setMaxTotal(maximumPoolSize * 2);
-        genericObjectPoolConfig.setMaxIdle(maximumPoolSize);
-        genericObjectPoolConfig.setMinIdle(corePoolSize);
-        JedisPool jedisPool = new JedisPool(genericObjectPoolConfig, redisHost, redisPort, 30000, redisPassword);
+        JedisPool jedisPool = Main.redisPool(corePoolSize, maximumPoolSize, redisHost, redisPort, redisPassword);
         Bootstrap bootstrap = new Bootstrap();
         byte[] nodeId = Utils.nodeId();
         Map<String, NodeTable> table = new Hashtable<>();
@@ -99,5 +95,24 @@ public class Main {
         scheduledExecutorService.scheduleAtFixedRate(new Peer(threadPoolExecutor, metaInfo, jedisPool), 1, 1, TimeUnit.SECONDS);
         LOGGER.info("start ok peerRequestTask");
         LOGGER.info("server ok");
+    }
+
+    private static JedisPool redisPool(int corePoolSize, int maximumPoolSize, String redisHost, int redisPort, String redisPassword) {
+
+        GenericObjectPoolConfig genericObjectPoolConfig = new GenericObjectPoolConfig();
+        genericObjectPoolConfig.setMaxTotal(maximumPoolSize * 2);
+        genericObjectPoolConfig.setMaxIdle(maximumPoolSize);
+        genericObjectPoolConfig.setMinIdle(corePoolSize);
+        JedisPool jedisPool;
+        if (redisPassword == null || "".equals(redisPassword.trim())) {
+
+            jedisPool = new JedisPool(genericObjectPoolConfig, redisHost, redisPort, 30000);
+
+        } else {
+
+            jedisPool = new JedisPool(genericObjectPoolConfig, redisHost, redisPort, 30000, redisPassword);
+
+        }
+        return jedisPool;
     }
 }

@@ -36,11 +36,11 @@ public class DiscardServerHandler extends SimpleChannelInboundHandler<DatagramPa
 
     private Map<String, NodeTable> nodeTable;
 
-    private Integer maxNodes;
+    private int maxNodes;
 
     private MetaInfo metaInfo;
 
-    public DiscardServerHandler(Map<String, NodeTable> nodeTable, byte[] nodeId, Integer maxNodes, MetaInfo metaInfo) {
+    public DiscardServerHandler(Map<String, NodeTable> nodeTable, byte[] nodeId, int maxNodes, MetaInfo metaInfo) {
 
         this.nodeId = nodeId;
         this.nodeTable = nodeTable;

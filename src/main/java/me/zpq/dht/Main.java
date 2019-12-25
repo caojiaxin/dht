@@ -46,23 +46,31 @@ public class Main {
             LOGGER.error("error config");
             return;
         }
+
+        byte[] transactionId = new byte[5];
+        new Random().nextBytes(transactionId);
+
         InputStream inputStream = Files.newInputStream(Paths.get(url.getFile()));
         Properties properties = new Properties();
         properties.load(inputStream);
+
         String host = properties.getProperty("server.ip");
         Integer port = Integer.valueOf(properties.getProperty("server.port"));
-        byte[] transactionId = new byte[5];
-        new Random().nextBytes(transactionId);
-        Integer minNodes = Integer.valueOf(properties.getProperty("server.nodes.min"));
-        Integer maxNodes = Integer.valueOf(properties.getProperty("server.nodes.max"));
+        int minNodes = Integer.parseInt(properties.getProperty("server.nodes.min"));
+        int maxNodes = Integer.parseInt(properties.getProperty("server.nodes.max"));
         int timeout = Integer.parseInt(properties.getProperty("server.nodes.timeout"));
         int corePoolSize = Integer.parseInt(properties.getProperty("server.peers.core.pool.size"));
         int maximumPoolSize = Integer.parseInt(properties.getProperty("server.peers.maximum.pool.size"));
+        int findNodeInterval = Integer.parseInt(properties.getProperty("server.findNode.interval"));
+        int pingInterval = Integer.parseInt(properties.getProperty("server.ping.interval"));
+        int removeNodeInterval = Integer.parseInt(properties.getProperty("server.removeNode.interval"));
+        int peerRequestInterval = Integer.parseInt(properties.getProperty("server.peerRequest.interval"));
         String redisHost = properties.getProperty("redis.host");
         int redisPort = Integer.parseInt(properties.getProperty("redis.port"));
         String redisPassword = properties.getProperty("redis.password");
         String mongoUri = properties.getProperty("mongodb.uri");
         inputStream.close();
+
         JedisPool jedisPool = Main.redisPool(corePoolSize, maximumPoolSize, redisHost, redisPort, redisPassword);
         Bootstrap bootstrap = new Bootstrap();
         byte[] nodeId = Utils.nodeId();
@@ -77,22 +85,22 @@ public class Main {
 
         ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(5);
         LOGGER.info("start autoFindNode");
-        scheduledExecutorService.scheduleWithFixedDelay(new FindNode(channel, transactionId, nodeId, table, minNodes), 2, 2, TimeUnit.SECONDS);
+        scheduledExecutorService.scheduleWithFixedDelay(new FindNode(channel, transactionId, nodeId, table, minNodes), findNodeInterval, findNodeInterval, TimeUnit.SECONDS);
         LOGGER.info("start ok autoFindNode");
 
         LOGGER.info("start Ping");
-        scheduledExecutorService.scheduleWithFixedDelay(new Ping(channel, transactionId, nodeId, table), 5, 20, TimeUnit.SECONDS);
+        scheduledExecutorService.scheduleWithFixedDelay(new Ping(channel, transactionId, nodeId, table), pingInterval, pingInterval, TimeUnit.SECONDS);
         LOGGER.info("start ok Ping");
 
         LOGGER.info("start RemoveNode");
-        scheduledExecutorService.scheduleWithFixedDelay(new RemoveNode(table, timeout), 30, 60, TimeUnit.SECONDS);
+        scheduledExecutorService.scheduleWithFixedDelay(new RemoveNode(table, timeout), removeNodeInterval, removeNodeInterval, TimeUnit.SECONDS);
         LOGGER.info("start ok RemoveNode");
 
         LOGGER.info("start peerRequestTask");
         ThreadFactory threadFactory = Executors.defaultThreadFactory();
         ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(corePoolSize, maximumPoolSize,
                 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), threadFactory);
-        scheduledExecutorService.scheduleAtFixedRate(new Peer(threadPoolExecutor, metaInfo, jedisPool), 1, 1, TimeUnit.SECONDS);
+        scheduledExecutorService.scheduleAtFixedRate(new Peer(threadPoolExecutor, metaInfo, jedisPool), peerRequestInterval, peerRequestInterval, TimeUnit.SECONDS);
         LOGGER.info("start ok peerRequestTask");
         LOGGER.info("server ok");
     }

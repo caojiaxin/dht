@@ -55,7 +55,7 @@ public class Main {
         properties.load(inputStream);
 
         String host = properties.getProperty("server.ip");
-        Integer port = Integer.valueOf(properties.getProperty("server.port"));
+        int port = Integer.parseInt(properties.getProperty("server.port"));
         int minNodes = Integer.parseInt(properties.getProperty("server.nodes.min"));
         int maxNodes = Integer.parseInt(properties.getProperty("server.nodes.max"));
         int timeout = Integer.parseInt(properties.getProperty("server.nodes.timeout"));

@@ -2,6 +2,10 @@ package me.zpq.dht;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
+import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientSettings;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelOption;
@@ -72,11 +76,16 @@ public class Main {
         inputStream.close();
 
         JedisPool jedisPool = Main.redisPool(corePoolSize, maximumPoolSize, redisHost, redisPort, redisPassword);
+        MongoClientSettings.Builder mongoClientSettings = MongoClientSettings.builder();
+        ConnectionString connectionString = new ConnectionString(mongoUri);
+        mongoClientSettings.applyConnectionString(connectionString);
+        MongoClient mongoClient = MongoClients.create(mongoClientSettings.build());
+
         Bootstrap bootstrap = new Bootstrap();
         byte[] nodeId = Utils.nodeId();
         Map<String, NodeTable> table = new Hashtable<>();
         table.put(new String(nodeId), new NodeTable(Utils.bytesToHex(nodeId), host, port, System.currentTimeMillis()));
-        MetaInfo metaInfo = new FileMetaInfoImpl(jedisPool, mongoUri);
+        MetaInfo metaInfo = new FileMetaInfoImpl(jedisPool, mongoClient);
         bootstrap.group(new NioEventLoopGroup())
                 .channel(NioDatagramChannel.class)
                 .option(ChannelOption.SO_BROADCAST, true)

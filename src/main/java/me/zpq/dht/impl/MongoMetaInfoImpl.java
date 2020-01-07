@@ -44,10 +44,9 @@ public class MongoMetaInfoImpl implements MetaInfo {
 
     private static final String META_INFO = "meta_info";
 
-    public MongoMetaInfoImpl(JedisPool jedisPool, String connectionString) {
+    public MongoMetaInfoImpl(JedisPool jedisPool, MongoClient mongoClient) {
 
         this.jedisPool = jedisPool;
-        MongoClient mongoClient = MongoClients.create(connectionString);
         MongoDatabase database = mongoClient.getDatabase(DHT);
         document = database.getCollection(META_INFO);
     }

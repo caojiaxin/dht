@@ -47,10 +47,9 @@ public class FileMetaInfoImpl implements MetaInfo {
 
     private static final String METADATA = "metadata";
 
-    public FileMetaInfoImpl(JedisPool jedisPool, String connectionString) {
+    public FileMetaInfoImpl(JedisPool jedisPool, MongoClient mongoClient) {
 
         this.jedisPool = jedisPool;
-        MongoClient mongoClient = MongoClients.create(connectionString);
         MongoDatabase database = mongoClient.getDatabase(DHT);
         document = database.getCollection(METADATA);
     }

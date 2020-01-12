@@ -76,10 +76,7 @@ public class Main {
         inputStream.close();
 
         JedisPool jedisPool = Main.redisPool(corePoolSize, maximumPoolSize, redisHost, redisPort, redisPassword);
-        MongoClientSettings.Builder mongoClientSettings = MongoClientSettings.builder();
-        ConnectionString connectionString = new ConnectionString(mongoUri);
-        mongoClientSettings.applyConnectionString(connectionString);
-        MongoClient mongoClient = MongoClients.create(mongoClientSettings.build());
+        MongoClient mongoClient = Main.mongo(mongoUri);
 
         Bootstrap bootstrap = new Bootstrap();
         byte[] nodeId = Utils.nodeId();
@@ -131,5 +128,13 @@ public class Main {
 
         }
         return jedisPool;
+    }
+
+    private static MongoClient mongo(String mongoUri) {
+
+        MongoClientSettings.Builder mongoClientSettings = MongoClientSettings.builder();
+        ConnectionString connectionString = new ConnectionString(mongoUri);
+        mongoClientSettings.applyConnectionString(connectionString);
+        return MongoClients.create(mongoClientSettings.build());
     }
 }

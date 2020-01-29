@@ -3,8 +3,6 @@ package me.zpq.dht.client;
 import be.adaxisoft.bencode.BDecoder;
 import be.adaxisoft.bencode.BEncodedValue;
 import be.adaxisoft.bencode.BEncoder;
-import me.zpq.dht.MetaInfo;
-import me.zpq.dht.exception.TryAgainException;
 import me.zpq.dht.util.Utils;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.slf4j.Logger;
@@ -47,16 +45,13 @@ public class PeerClient {
 
     private byte[] infoHash;
 
-    private MetaInfo metaInfoTodo;
-
-    public PeerClient(String host, int port, byte[] infoHash, MetaInfo metaInfoTodo) {
+    public PeerClient(String host, int port, byte[] infoHash) {
         this.host = host;
         this.port = port;
         this.infoHash = infoHash;
-        this.metaInfoTodo = metaInfoTodo;
     }
 
-    public void request() throws TryAgainException {
+    public byte[] request() {
 
         try (Socket socket = new Socket()) {
             socket.setSoTimeout(READ_TIMEOUT);
@@ -70,14 +65,14 @@ public class PeerClient {
             this.handshake(outputStream);
             if (!this.validatorHandshake(inputStream)) {
 
-                return;
+                return null;
             }
             LOGGER.info("try to extHandShake");
             this.extHandShake(outputStream);
             BEncodedValue bEncodedValue = this.validatorExtHandShake(inputStream);
             if (bEncodedValue == null) {
 
-                return;
+                return null;
             }
             int utMetadata = bEncodedValue.getMap().get(M).getMap().get(UT_METADATA).getInt();
             int metaDataSize = bEncodedValue.getMap().get(METADATA_SIZE).getInt();
@@ -106,25 +101,23 @@ public class PeerClient {
             byte[] sha1 = DigestUtils.sha1(info);
             if (sha1.length != infoHash.length) {
 
-                throw new TryAgainException("length fail");
+                LOGGER.error("length fail");
+                return null;
             }
             for (int i = 0; i < infoHash.length; i++) {
 
                 if (infoHash[i] != sha1[i]) {
 
-                    throw new TryAgainException("info hash not eq");
+                    LOGGER.error("info hash not eq");
+                    return null;
                 }
             }
             LOGGER.info("success");
-            metaInfoTodo.todoSomething(info);
-
-        } catch (TryAgainException e) {
-
-            throw e;
-
+            return info;
         } catch (Exception e) {
 
             LOGGER.error("{} : {}", e.getClass().getName(), e.getMessage());
+            return null;
         }
 
     }

@@ -19,10 +19,8 @@ import me.zpq.dht.scheduled.Ping;
 import me.zpq.dht.scheduled.RemoveNode;
 import me.zpq.dht.server.DiscardServerHandler;
 import me.zpq.dht.util.Utils;
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import redis.clients.jedis.JedisPool;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -50,7 +48,7 @@ public class Main {
             LOGGER.error("error config");
             return;
         }
-
+        LinkedBlockingQueue<String> metadata = new LinkedBlockingQueue<>();
         byte[] transactionId = new byte[5];
         new Random().nextBytes(transactionId);
 
@@ -69,24 +67,20 @@ public class Main {
         int pingInterval = Integer.parseInt(properties.getProperty("server.ping.interval"));
         int removeNodeInterval = Integer.parseInt(properties.getProperty("server.removeNode.interval"));
         int peerRequestInterval = Integer.parseInt(properties.getProperty("server.peerRequest.interval"));
-        String redisHost = properties.getProperty("redis.host");
-        int redisPort = Integer.parseInt(properties.getProperty("redis.port"));
-        String redisPassword = properties.getProperty("redis.password");
         String mongoUri = properties.getProperty("mongodb.uri");
         inputStream.close();
 
-        JedisPool jedisPool = Main.redisPool(corePoolSize, maximumPoolSize, redisHost, redisPort, redisPassword);
         MongoClient mongoClient = Main.mongo(mongoUri);
 
         Bootstrap bootstrap = new Bootstrap();
         byte[] nodeId = Utils.nodeId();
         Map<String, NodeTable> table = new Hashtable<>();
         table.put(new String(nodeId), new NodeTable(Utils.bytesToHex(nodeId), host, port, System.currentTimeMillis()));
-        MetaInfo metaInfo = new FileMetaInfoImpl(jedisPool, mongoClient);
+        MetaInfo metaInfo = new FileMetaInfoImpl(mongoClient);
         bootstrap.group(new NioEventLoopGroup())
                 .channel(NioDatagramChannel.class)
                 .option(ChannelOption.SO_BROADCAST, true)
-                .handler(new DiscardServerHandler(table, nodeId, maxNodes, metaInfo));
+                .handler(new DiscardServerHandler(table, nodeId, maxNodes, metadata));
         final Channel channel = bootstrap.bind(port).sync().channel();
 
         ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(5);
@@ -106,28 +100,9 @@ public class Main {
         ThreadFactory threadFactory = Executors.defaultThreadFactory();
         ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(corePoolSize, maximumPoolSize,
                 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), threadFactory);
-        scheduledExecutorService.scheduleAtFixedRate(new Peer(threadPoolExecutor, metaInfo, jedisPool), peerRequestInterval, peerRequestInterval, TimeUnit.SECONDS);
+        scheduledExecutorService.scheduleAtFixedRate(new Peer(threadPoolExecutor, metaInfo, metadata), peerRequestInterval, peerRequestInterval, TimeUnit.SECONDS);
         LOGGER.info("start ok peerRequestTask");
         LOGGER.info("server ok");
-    }
-
-    private static JedisPool redisPool(int corePoolSize, int maximumPoolSize, String redisHost, int redisPort, String redisPassword) {
-
-        GenericObjectPoolConfig genericObjectPoolConfig = new GenericObjectPoolConfig();
-        genericObjectPoolConfig.setMaxTotal(maximumPoolSize * 2);
-        genericObjectPoolConfig.setMaxIdle(maximumPoolSize);
-        genericObjectPoolConfig.setMinIdle(corePoolSize);
-        JedisPool jedisPool;
-        if (redisPassword == null || "".equals(redisPassword.trim())) {
-
-            jedisPool = new JedisPool(genericObjectPoolConfig, redisHost, redisPort, 30000);
-
-        } else {
-
-            jedisPool = new JedisPool(genericObjectPoolConfig, redisHost, redisPort, 30000, redisPassword);
-
-        }
-        return jedisPool;
     }
 
     private static MongoClient mongo(String mongoUri) {

@@ -21,8 +21,6 @@ import java.util.List;
 
 public class FileMetaInfoImpl implements MetaInfo {
 
-    private JedisPool jedisPool;
-
     private MongoCollection<Document> document;
 
     private static final String HASH = "hash";
@@ -47,9 +45,8 @@ public class FileMetaInfoImpl implements MetaInfo {
 
     private static final String METADATA = "metadata";
 
-    public FileMetaInfoImpl(JedisPool jedisPool, MongoClient mongoClient) {
+    public FileMetaInfoImpl(MongoClient mongoClient) {
 
-        this.jedisPool = jedisPool;
         MongoDatabase database = mongoClient.getDatabase(DHT);
         document = database.getCollection(METADATA);
     }
@@ -121,16 +118,6 @@ public class FileMetaInfoImpl implements MetaInfo {
     @Override
     public void onAnnouncePeer(String host, Integer port, byte[] hash) {
 
-        if (this.isExist(hash)) {
-
-            return;
-        }
-        try (Jedis jedis = jedisPool.getResource()) {
-
-            String infoHash = Utils.bytesToHex(hash);
-
-            jedis.sadd(METADATA, String.join(":", host, infoHash, String.valueOf(port)));
-        }
     }
 
     @Override

@@ -24,8 +24,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
+import java.io.OutputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.*;
@@ -41,18 +42,18 @@ public class Main {
     public static void main(String[] args) throws InterruptedException, IOException {
 
         ((LoggerContext) LoggerFactory.getILoggerFactory()).getLogger("org.mongodb.driver").setLevel(Level.ERROR);
-        ClassLoader classLoader = Main.class.getClassLoader();
-        URL url = classLoader.getResource("config.properties");
-        if (url == null) {
+        String dir = System.getProperty("user.dir");
+        Path configFile = Paths.get(dir + "/config.properties");
+        if (!Files.exists(configFile)) {
 
             LOGGER.error("error config");
             return;
         }
-        LinkedBlockingQueue<String> metadata = new LinkedBlockingQueue<>();
+        LinkedBlockingQueue<String> metadata = queue();
         byte[] transactionId = new byte[5];
         new Random().nextBytes(transactionId);
 
-        InputStream inputStream = Files.newInputStream(Paths.get(url.getFile()));
+        InputStream inputStream = Files.newInputStream(configFile);
         Properties properties = new Properties();
         properties.load(inputStream);
 
@@ -103,6 +104,35 @@ public class Main {
         scheduledExecutorService.scheduleAtFixedRate(new Peer(threadPoolExecutor, metaInfo, metadata), peerRequestInterval, peerRequestInterval, TimeUnit.SECONDS);
         LOGGER.info("start ok peerRequestTask");
         LOGGER.info("server ok");
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            channel.close();
+            Path path = Paths.get(dir + "/list.txt");
+            try (OutputStream outputStream = Files.newOutputStream(path)) {
+                String[] strings = metadata.toArray(new String[0]);
+                String join = String.join("\r\n", strings);
+                outputStream.write(join.getBytes());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }));
+    }
+
+    private static LinkedBlockingQueue<String> queue() {
+
+        String dir = System.getProperty("user.dir");
+        Path path = Paths.get(dir + "/list.txt");
+        if (Files.exists(path)) {
+
+            try {
+                byte[] bytes = Files.readAllBytes(path);
+                String s = new String(bytes);
+                String[] split = s.split("\r\n");
+                return new LinkedBlockingQueue<>(Arrays.asList(split));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return new LinkedBlockingQueue<>();
     }
 
     private static MongoClient mongo(String mongoUri) {

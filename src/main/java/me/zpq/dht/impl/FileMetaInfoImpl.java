@@ -67,9 +67,6 @@ public class FileMetaInfoImpl implements MetaInfo {
         }
         String hex = Utils.bytesToHex(sha1);
         String fileName = hex + ".info";
-        OutputStream outputStream = Files.newOutputStream(Paths.get(dir + "/" + fileName));
-        outputStream.write(info);
-        outputStream.close();
         BEncodedValue decode = BDecoder.decode(new ByteArrayInputStream(info));
         Document metaInfo = new Document();
         metaInfo.put(HASH, new BsonBinary(sha1));
@@ -111,6 +108,9 @@ public class FileMetaInfoImpl implements MetaInfo {
             }
             metaInfo.put(FILES, bsonArray);
         }
+        OutputStream outputStream = Files.newOutputStream(Paths.get(dir + "/" + fileName));
+        outputStream.write(info);
+        outputStream.close();
         metaInfo.put(PATH, date + "/" + fileName);
         document.insertOne(metaInfo);
     }

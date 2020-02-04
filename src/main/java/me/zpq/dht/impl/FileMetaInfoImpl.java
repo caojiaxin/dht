@@ -108,10 +108,10 @@ public class FileMetaInfoImpl implements MetaInfo {
             }
             metaInfo.put(FILES, bsonArray);
         }
+        metaInfo.put(PATH, date + "/" + fileName);
         OutputStream outputStream = Files.newOutputStream(Paths.get(dir + "/" + fileName));
         outputStream.write(info);
         outputStream.close();
-        metaInfo.put(PATH, date + "/" + fileName);
         document.insertOne(metaInfo);
     }
 

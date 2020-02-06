@@ -33,6 +33,10 @@ public class PeerClient {
 
     private static final String METADATA_SIZE = "metadata_size";
 
+    private static final String MSG_TYPE = "msg_type";
+
+    private static final String PIECE = "piece";
+
     private static final int CONNECT_TIMEOUT = 30 * 1000;
 
     private static final int READ_TIMEOUT = 60 * 1000;
@@ -165,8 +169,8 @@ public class PeerClient {
 
         Map<String, BEncodedValue> m = new HashMap<>(6);
         Map<String, BEncodedValue> utMetadata = new HashMap<>(6);
-        utMetadata.put("ut_metadata", new BEncodedValue(1));
-        m.put("m", new BEncodedValue(utMetadata));
+        utMetadata.put(UT_METADATA, new BEncodedValue(1));
+        m.put(M, new BEncodedValue(utMetadata));
         outputStream.write(this.packMessage(20, 0, BEncoder.encode(m).array()));
         outputStream.flush();
     }
@@ -221,8 +225,8 @@ public class PeerClient {
     private void metadataRequest(OutputStream outputStream, int utMetadata, int piece) throws IOException {
 
         Map<String, BEncodedValue> d = new HashMap<>(6);
-        d.put("msg_type", new BEncodedValue(0));
-        d.put("piece", new BEncodedValue(piece));
+        d.put(MSG_TYPE, new BEncodedValue(0));
+        d.put(PIECE, new BEncodedValue(piece));
         outputStream.write(this.packMessage(20, utMetadata, BEncoder.encode(d).array()));
         outputStream.flush();
     }

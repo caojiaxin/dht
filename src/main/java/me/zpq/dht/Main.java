@@ -106,6 +106,8 @@ public class Main {
         LOGGER.info("server ok");
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             channel.close();
+            threadPoolExecutor.shutdown();
+            mongoClient.close();
             Path path = Paths.get(dir + "/list.txt");
             try (OutputStream outputStream = Files.newOutputStream(path)) {
                 String[] strings = metadata.toArray(new String[0]);

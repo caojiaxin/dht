@@ -37,6 +37,8 @@ public class PeerClient {
 
     private static final String PIECE = "piece";
 
+    private static final String TOTAL_SIZE = "total_size";
+
     private static final int CONNECT_TIMEOUT = 30 * 1000;
 
     private static final int READ_TIMEOUT = 60 * 1000;
@@ -91,9 +93,9 @@ public class PeerClient {
             for (int i = 0; i < block; i++) {
 
                 Map<String, BEncodedValue> m = new HashMap<>(6);
-                m.put("msg_type", new BEncodedValue(1));
-                m.put("piece", new BEncodedValue(i));
-                m.put("total_size", new BEncodedValue(metaDataSize));
+                m.put(MSG_TYPE, new BEncodedValue(1));
+                m.put(PIECE, new BEncodedValue(i));
+                m.put(TOTAL_SIZE, new BEncodedValue(metaDataSize));
                 byte[] response = BEncoder.encode(m).array();
                 byte[] length = this.resolveLengthMessage(inputStream, 4);
                 byte[] result = this.resolveLengthMessage(inputStream, byte2int(length));

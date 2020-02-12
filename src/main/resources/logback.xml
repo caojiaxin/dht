@@ -9,10 +9,6 @@
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
             <Pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</Pattern>
         </encoder>
-        <!--日志文件最大的大小-->
-        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
-            <MaxFileSize>100MB</MaxFileSize>
-        </triggeringPolicy>
     </appender>
     <root level="debug">
         <appender-ref ref="FILE" />

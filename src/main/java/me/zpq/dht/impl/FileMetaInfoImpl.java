@@ -7,8 +7,6 @@ import me.zpq.dht.MetaInfo;
 import me.zpq.dht.util.Utils;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.bson.*;
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.JedisPool;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -45,6 +43,10 @@ public class FileMetaInfoImpl implements MetaInfo {
 
     private static final String METADATA = "metadata";
 
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy/MM/dd");
+
+    private static final String FILE_EXT = ".info";
+
     public FileMetaInfoImpl(MongoClient mongoClient) {
 
         MongoDatabase database = mongoClient.getDatabase(DHT);
@@ -59,14 +61,14 @@ public class FileMetaInfoImpl implements MetaInfo {
 
             return;
         }
-        String date = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
+        String date = LocalDate.now().format(FORMATTER);
         String dir = "/" + METADATA + "/" + date;
         if (!Files.exists(Paths.get(dir))) {
 
             Files.createDirectories(Paths.get(dir));
         }
         String hex = Utils.bytesToHex(sha1);
-        String fileName = hex + ".info";
+        String fileName = hex + FILE_EXT;
         BEncodedValue decode = BDecoder.decode(new ByteArrayInputStream(info));
         Document metaInfo = new Document();
         metaInfo.put(HASH, new BsonBinary(sha1));
@@ -113,17 +115,6 @@ public class FileMetaInfoImpl implements MetaInfo {
         outputStream.write(info);
         outputStream.close();
         document.insertOne(metaInfo);
-    }
-
-    @Override
-    public void onAnnouncePeer(String host, Integer port, byte[] hash) {
-
-    }
-
-    @Override
-    public String redisKey() {
-
-        return METADATA;
     }
 
     private Boolean isExist(byte[] sha1) {

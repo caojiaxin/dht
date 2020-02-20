@@ -9,6 +9,7 @@ import com.mongodb.client.MongoClients;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelOption;
+import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 import me.zpq.dht.impl.FileMetaInfoImpl;
@@ -49,7 +50,7 @@ public class Main {
             LOGGER.error("error config");
             return;
         }
-        LinkedBlockingQueue<String> metadata = queue();
+        LinkedBlockingQueue<String> metadata = new LinkedBlockingQueue<>();
         byte[] transactionId = new byte[5];
         new Random().nextBytes(transactionId);
 
@@ -78,7 +79,8 @@ public class Main {
         Map<String, NodeTable> table = new Hashtable<>();
         table.put(new String(nodeId), new NodeTable(Utils.bytesToHex(nodeId), host, port, System.currentTimeMillis()));
         MetaInfo metaInfo = new FileMetaInfoImpl(mongoClient);
-        bootstrap.group(new NioEventLoopGroup())
+        EventLoopGroup group = new NioEventLoopGroup();
+        bootstrap.group(group)
                 .channel(NioDatagramChannel.class)
                 .option(ChannelOption.SO_BROADCAST, true)
                 .handler(new DiscardServerHandler(table, nodeId, maxNodes, metadata));
@@ -105,36 +107,13 @@ public class Main {
         LOGGER.info("start ok peerRequestTask");
         LOGGER.info("server ok");
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            channel.close();
-            threadPoolExecutor.shutdown();
+
             mongoClient.close();
-            Path path = Paths.get(dir + "/list.txt");
-            try (OutputStream outputStream = Files.newOutputStream(path)) {
-                String[] strings = metadata.toArray(new String[0]);
-                String join = String.join("\r\n", strings);
-                outputStream.write(join.getBytes());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            threadPoolExecutor.shutdown();
+            scheduledExecutorService.shutdown();
+            group.shutdownGracefully();
+
         }));
-    }
-
-    private static LinkedBlockingQueue<String> queue() {
-
-        String dir = System.getProperty("user.dir");
-        Path path = Paths.get(dir + "/list.txt");
-        if (Files.exists(path)) {
-
-            try {
-                byte[] bytes = Files.readAllBytes(path);
-                String s = new String(bytes);
-                String[] split = s.split("\r\n");
-                return new LinkedBlockingQueue<>(Arrays.asList(split));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return new LinkedBlockingQueue<>();
     }
 
     private static MongoClient mongo(String mongoUri) {

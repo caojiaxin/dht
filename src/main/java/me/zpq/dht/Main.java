@@ -112,7 +112,7 @@ public class Main {
             threadPoolExecutor.shutdown();
             scheduledExecutorService.shutdown();
             group.shutdownGracefully();
-
+            LOGGER.info("server shutdown");
         }));
     }
 

@@ -43,6 +43,8 @@ public class FileMetaInfoImpl implements MetaInfo {
 
     private static final String METADATA = "metadata";
 
+    private static final String SIZE = "size";
+
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy/MM/dd");
 
     private static final String FILE_EXT = ".info";
@@ -71,6 +73,7 @@ public class FileMetaInfoImpl implements MetaInfo {
         String fileName = hex + FILE_EXT;
         BEncodedValue decode = BDecoder.decode(new ByteArrayInputStream(info));
         Document metaInfo = new Document();
+        long size = 0;
         metaInfo.put(HASH, new BsonBinary(sha1));
         String name = decode.getMap().get(NAME).getString();
         if (decode.getMap().get(NAME_UTF8) != null) {
@@ -84,7 +87,8 @@ public class FileMetaInfoImpl implements MetaInfo {
         if (decode.getMap().get(LENGTH) != null) {
 
             // single-file mode
-            metaInfo.put(LENGTH, new BsonInt64(decode.getMap().get(LENGTH).getLong()));
+            size = decode.getMap().get(LENGTH).getLong();
+            metaInfo.put(LENGTH, new BsonInt64(size));
         } else {
 
             // multi-file mode
@@ -93,6 +97,7 @@ public class FileMetaInfoImpl implements MetaInfo {
             for (BEncodedValue file : files) {
 
                 BsonDocument f = new BsonDocument();
+                size += file.getMap().get(LENGTH).getLong();
                 f.put(LENGTH, new BsonInt64(file.getMap().get(LENGTH).getLong()));
                 BsonArray path = new BsonArray();
                 List<BEncodedValue> paths = file.getMap().get(PATH).getList();
@@ -111,6 +116,7 @@ public class FileMetaInfoImpl implements MetaInfo {
             metaInfo.put(FILES, bsonArray);
         }
         metaInfo.put(PATH, date + "/" + fileName);
+        metaInfo.put(SIZE, new BsonInt64(size));
         OutputStream outputStream = Files.newOutputStream(Paths.get(dir + "/" + fileName));
         outputStream.write(info);
         outputStream.close();

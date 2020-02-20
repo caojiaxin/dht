@@ -51,7 +51,7 @@ public class DiscardServerHandler extends SimpleChannelInboundHandler<DatagramPa
 
         try {
 
-            ByteBuf content = datagramPacket.copy().content();
+            ByteBuf content = datagramPacket.content();
             byte[] req = new byte[content.readableBytes()];
             content.readBytes(req);
 

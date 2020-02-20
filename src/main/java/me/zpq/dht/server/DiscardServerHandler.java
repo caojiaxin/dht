@@ -54,7 +54,6 @@ public class DiscardServerHandler extends SimpleChannelInboundHandler<DatagramPa
             ByteBuf content = datagramPacket.copy().content();
             byte[] req = new byte[content.readableBytes()];
             content.readBytes(req);
-            content.release();
 
             BEncodedValue data = BDecoder.decode(new ByteArrayInputStream(req));
             byte[] transactionId = data.getMap().get(DhtProtocol.T).getBytes();
@@ -79,7 +78,7 @@ public class DiscardServerHandler extends SimpleChannelInboundHandler<DatagramPa
                             this.queryAnnouncePeer(channelHandlerContext, datagramPacket, transactionId, a);
                             break;
                         default:
-//                            this.queryMethodUnknown(channelHandlerContext, datagramPacket, transactionId);
+                            this.queryMethodUnknown(channelHandlerContext, datagramPacket, transactionId);
                             break;
                     }
 

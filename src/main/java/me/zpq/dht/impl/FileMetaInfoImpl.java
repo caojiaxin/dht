@@ -115,7 +115,7 @@ public class FileMetaInfoImpl implements MetaInfo {
             }
             metaInfo.put(FILES, bsonArray);
         }
-        metaInfo.put(PATH, date + "/" + fileName);
+        metaInfo.put(PATH, "/" + date + "/" + fileName);
         metaInfo.put(SIZE, new BsonInt64(size));
         OutputStream outputStream = Files.newOutputStream(Paths.get(dir + "/" + fileName));
         outputStream.write(info);

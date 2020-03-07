@@ -46,19 +46,27 @@ public class FindNode implements Runnable {
     @Override
     public void run() {
 
-        if (tableMap.size() >= minNodes) {
-
-            return;
-        }
-
         try {
 
             byte[] findNodeQuery = DhtProtocol.findNodeQuery(transactionId, nodeId, Utils.nodeId());
 
-            list.forEach(bootstrapAddress -> channel.writeAndFlush(
-                    new DatagramPacket(Unpooled.copiedBuffer(findNodeQuery),
-                            new InetSocketAddress(bootstrapAddress.getHost(), bootstrapAddress.getPort())
-                    )));
+            if (tableMap.size() < minNodes) {
+
+                log.info("do find Node in BootstrapAddress");
+                list.forEach(bootstrapAddress -> channel.writeAndFlush(
+                        new DatagramPacket(Unpooled.copiedBuffer(findNodeQuery),
+                                new InetSocketAddress(bootstrapAddress.getHost(), bootstrapAddress.getPort())
+                        )));
+            } else {
+
+                log.info("do find Node in NodeTable");
+                List<NodeTable> nodeTables = new ArrayList<>(tableMap.values());
+                nodeTables.forEach(nodeTable -> channel.writeAndFlush(
+                        new DatagramPacket(Unpooled.copiedBuffer(findNodeQuery),
+                                new InetSocketAddress(nodeTable.getIp(), nodeTable.getPort())
+                        )));
+            }
+
         } catch (IOException e) {
 
             log.error(e.getMessage(), e);

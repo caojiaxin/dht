@@ -91,9 +91,9 @@ public class Main {
         scheduledExecutorService.scheduleWithFixedDelay(new Ping(channel, transactionId, nodeId, table), pingInterval, pingInterval, TimeUnit.SECONDS);
         log.info("start ok Ping");
 
-        log.info("start GetPeers");
-        scheduledExecutorService.scheduleWithFixedDelay(new GetPeers(channel, transactionId, nodeId, table), 60, 60, TimeUnit.SECONDS);
-        log.info("start ok GetPeers");
+//        log.info("start GetPeers");
+//        scheduledExecutorService.scheduleWithFixedDelay(new GetPeers(channel, transactionId, nodeId, table), 60, 60, TimeUnit.SECONDS);
+//        log.info("start ok GetPeers");
 
         log.info("start RemoveNode");
         scheduledExecutorService.scheduleWithFixedDelay(new RemoveNode(table, timeout), removeNodeInterval, removeNodeInterval, TimeUnit.SECONDS);

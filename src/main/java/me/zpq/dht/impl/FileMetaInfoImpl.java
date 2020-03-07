@@ -7,6 +7,8 @@ import me.zpq.dht.MetaInfo;
 import me.zpq.dht.util.Utils;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.bson.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -18,6 +20,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class FileMetaInfoImpl implements MetaInfo {
+
+    private static final Logger log = LoggerFactory.getLogger(FileMetaInfoImpl.class);
 
     private MongoCollection<Document> document;
 
@@ -62,7 +66,7 @@ public class FileMetaInfoImpl implements MetaInfo {
         String hex = Utils.bytesToHex(sha1);
         if (this.isExist(sha1)) {
 
-            System.out.println("sha1: " + hex + "is exist");
+            log.info("sha1: {} is exist", hex);
             return;
         }
         String date = LocalDate.now().format(FORMATTER);

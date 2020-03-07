@@ -53,9 +53,12 @@ public class FindNode implements Runnable {
 
         try {
 
-            final byte[] findNodeQuery = DhtProtocol.findNodeQuery(transactionId, nodeId, Utils.nodeId());
-            list.forEach(bootstrapAddress -> channel.writeAndFlush(new DatagramPacket(Unpooled.copiedBuffer(findNodeQuery),
-                    new InetSocketAddress(bootstrapAddress.getHost(), bootstrapAddress.getPort()))));
+            byte[] findNodeQuery = DhtProtocol.findNodeQuery(transactionId, nodeId, Utils.nodeId());
+
+            list.forEach(bootstrapAddress -> channel.writeAndFlush(
+                    new DatagramPacket(Unpooled.copiedBuffer(findNodeQuery),
+                            new InetSocketAddress(bootstrapAddress.getHost(), bootstrapAddress.getPort())
+                    )));
         } catch (IOException e) {
 
             log.error(e.getMessage(), e);

@@ -14,10 +14,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 import me.zpq.dht.impl.FileMetaInfoImpl;
 import me.zpq.dht.model.NodeTable;
-import me.zpq.dht.scheduled.FindNode;
-import me.zpq.dht.scheduled.Peer;
-import me.zpq.dht.scheduled.Ping;
-import me.zpq.dht.scheduled.RemoveNode;
+import me.zpq.dht.scheduled.*;
 import me.zpq.dht.server.DiscardServerHandler;
 import me.zpq.dht.util.Utils;
 import org.slf4j.Logger;
@@ -25,7 +22,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -94,6 +90,10 @@ public class Main {
         log.info("start Ping");
         scheduledExecutorService.scheduleWithFixedDelay(new Ping(channel, transactionId, nodeId, table), pingInterval, pingInterval, TimeUnit.SECONDS);
         log.info("start ok Ping");
+
+        log.info("start GetPeers");
+        scheduledExecutorService.scheduleWithFixedDelay(new GetPeers(channel, transactionId, nodeId, table), 60, 60, TimeUnit.SECONDS);
+        log.info("start ok GetPeers");
 
         log.info("start RemoveNode");
         scheduledExecutorService.scheduleWithFixedDelay(new RemoveNode(table, timeout), removeNodeInterval, removeNodeInterval, TimeUnit.SECONDS);

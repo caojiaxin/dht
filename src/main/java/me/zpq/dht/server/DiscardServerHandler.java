@@ -57,9 +57,6 @@ public class DiscardServerHandler extends SimpleChannelInboundHandler<DatagramPa
 
             BEncodedValue data = BDecoder.decode(new ByteArrayInputStream(req));
             byte[] transactionId = data.getMap().get(DhtProtocol.T).getBytes();
-            String id = Utils.bytesToHex(data.getMap().get(DhtProtocol.ID).getBytes());
-            String ip = datagramPacket.sender().getAddress().getHostAddress();
-            int port = datagramPacket.sender().getPort();
 
             switch (data.getMap().get(DhtProtocol.Y).getString()) {
 
@@ -110,17 +107,6 @@ public class DiscardServerHandler extends SimpleChannelInboundHandler<DatagramPa
                     break;
             }
 
-            if (nodeTable.containsKey(id)) {
-
-                NodeTable nodeTable = this.nodeTable.get(id);
-                nodeTable.setTime(System.currentTimeMillis());
-                this.nodeTable.put(id, nodeTable);
-            } else {
-
-                this.nodeTable.put(id, new NodeTable(id, ip, port, System.currentTimeMillis()));
-            }
-
-
         } catch (Exception e) {
 
             log.error(e.getMessage(), e);
@@ -133,6 +119,11 @@ public class DiscardServerHandler extends SimpleChannelInboundHandler<DatagramPa
         ctx.writeAndFlush(new DatagramPacket(
                 Unpooled.copiedBuffer(DhtProtocol.pingResponse(transactionId, nodeId)),
                 datagramPacket.sender()));
+
+        String id = Utils.bytesToHex(a.get(DhtProtocol.ID).getBytes());
+        String ip = datagramPacket.sender().getAddress().getHostAddress();
+        int port = datagramPacket.sender().getPort();
+        this.updateNodeTable(id, ip, port);
     }
 
     private void queryFindNode(ChannelHandlerContext ctx, DatagramPacket datagramPacket, byte[] transactionId) throws IOException {
@@ -156,6 +147,8 @@ public class DiscardServerHandler extends SimpleChannelInboundHandler<DatagramPa
     }
 
     private void queryAnnouncePeer(ChannelHandlerContext ctx, DatagramPacket datagramPacket, byte[] transactionId, Map<String, BEncodedValue> a) throws IOException {
+
+        String id = Utils.bytesToHex(a.get(DhtProtocol.ID).getBytes());
 
         // sha1
         byte[] infoHash = a.get(DhtProtocol.INFO_HASH).getBytes();
@@ -193,6 +186,7 @@ public class DiscardServerHandler extends SimpleChannelInboundHandler<DatagramPa
                 Unpooled.copiedBuffer(
                         DhtProtocol.announcePeerResponse(transactionId, nodeId)),
                 datagramPacket.sender()));
+        this.updateNodeTable(id, address, datagramPacket.sender().getPort());
     }
 
     private void queryMethodUnknown(ChannelHandlerContext ctx, DatagramPacket datagramPacket, byte[] transactionId) throws IOException {
@@ -265,5 +259,18 @@ public class DiscardServerHandler extends SimpleChannelInboundHandler<DatagramPa
             }
         }
         return true;
+    }
+
+    private void updateNodeTable(String id, String ip, int port) {
+
+        if (nodeTable.containsKey(id)) {
+
+            NodeTable nodeTable = this.nodeTable.get(id);
+            nodeTable.setTime(System.currentTimeMillis());
+            this.nodeTable.put(id, nodeTable);
+        } else {
+
+            this.nodeTable.put(id, new NodeTable(id, ip, port, System.currentTimeMillis()));
+        }
     }
 }

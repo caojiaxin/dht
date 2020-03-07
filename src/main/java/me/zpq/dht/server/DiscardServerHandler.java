@@ -16,9 +16,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.stream.Collectors;
 
 /**
  * @author zpq
@@ -30,16 +32,16 @@ public class DiscardServerHandler extends SimpleChannelInboundHandler<DatagramPa
 
     private byte[] nodeId;
 
-    private Set<NodeTable> nodeTables;
+    private Map<String, NodeTable> nodeTable;
 
     private int maxNodes;
 
     private LinkedBlockingQueue<String> metadata;
 
-    public DiscardServerHandler(Set<NodeTable> nodeTables, byte[] nodeId, int maxNodes, LinkedBlockingQueue<String> metadata) {
+    public DiscardServerHandler(Map<String, NodeTable> nodeTable, byte[] nodeId, int maxNodes, LinkedBlockingQueue<String> metadata) {
 
         this.nodeId = nodeId;
-        this.nodeTables = nodeTables;
+        this.nodeTable = nodeTable;
         this.maxNodes = maxNodes;
         this.metadata = metadata;
     }
@@ -55,12 +57,6 @@ public class DiscardServerHandler extends SimpleChannelInboundHandler<DatagramPa
 
             BEncodedValue data = BDecoder.decode(new ByteArrayInputStream(req));
             byte[] transactionId = data.getMap().get(DhtProtocol.T).getBytes();
-            // ip
-            String address = datagramPacket.sender().getAddress().getHostAddress();
-
-            int port = datagramPacket.sender().getPort();
-
-            String id = Utils.bytesToHex(data.getMap().get(DhtProtocol.ID).getBytes());
 
             switch (data.getMap().get(DhtProtocol.Y).getString()) {
 
@@ -90,6 +86,10 @@ public class DiscardServerHandler extends SimpleChannelInboundHandler<DatagramPa
                 case DhtProtocol.R:
 
                     Map<String, BEncodedValue> r = data.getMap().get(DhtProtocol.R).getMap();
+                    if (r.get(DhtProtocol.A) != null) {
+
+                        this.responseHasId(r, datagramPacket);
+                    }
 
                     if (r.get(DhtProtocol.NODES) != null) {
 
@@ -107,9 +107,6 @@ public class DiscardServerHandler extends SimpleChannelInboundHandler<DatagramPa
                     break;
             }
 
-            Set<NodeTable> table = Collections.synchronizedSet(nodeTables);
-
-            table.add(new NodeTable(id, address, port, System.currentTimeMillis()));
 
         } catch (Exception e) {
 
@@ -123,12 +120,18 @@ public class DiscardServerHandler extends SimpleChannelInboundHandler<DatagramPa
         ctx.writeAndFlush(new DatagramPacket(
                 Unpooled.copiedBuffer(DhtProtocol.pingResponse(transactionId, nodeId)),
                 datagramPacket.sender()));
+        String id = a.get(DhtProtocol.ID).getString();
+        if (nodeTable.containsKey(id)) {
 
+            NodeTable nodeTable = this.nodeTable.get(id);
+            nodeTable.setTime(System.currentTimeMillis());
+            this.nodeTable.put(id, nodeTable);
+        }
     }
 
     private void queryFindNode(ChannelHandlerContext ctx, DatagramPacket datagramPacket, byte[] transactionId) throws IOException {
 
-        List<NodeTable> table = new ArrayList<>(nodeTables);
+        List<NodeTable> table = new ArrayList<>(nodeTable.values());
         ctx.writeAndFlush(new DatagramPacket(
                 Unpooled.copiedBuffer(
                         DhtProtocol.findNodeResponse(transactionId, nodeId, Utils.nodesEncode(table))),
@@ -194,20 +197,35 @@ public class DiscardServerHandler extends SimpleChannelInboundHandler<DatagramPa
                 datagramPacket.sender()));
     }
 
+    private void responseHasId(Map<String, BEncodedValue> r, DatagramPacket datagramPacket) throws InvalidBEncodingException {
+
+        String id = r.get(DhtProtocol.ID).getString();
+
+        if (this.nodeTable.containsKey(id)) {
+
+            String address = datagramPacket.sender().getAddress().getHostAddress();
+
+            int port = datagramPacket.sender().getPort();
+
+            this.nodeTable.put(id, new NodeTable(Utils.bytesToHex(r.get(DhtProtocol.ID).getBytes()), address, port, System.currentTimeMillis()));
+        }
+    }
+
     private void responseHasNodes(Map<String, BEncodedValue> r) throws InvalidBEncodingException {
 
         byte[] nodes = r.get(DhtProtocol.NODES).getBytes();
 
         List<NodeTable> nodeTableList = Utils.nodesDecode(nodes);
 
-        Set<NodeTable> nodeTableSet = Collections.synchronizedSet(nodeTables);
-
-        if (nodeTableSet.size() >= maxNodes) {
+        if (nodeTable.size() >= maxNodes) {
 
             return;
         }
-        nodeTableSet.addAll(nodeTableList.stream()
-                .peek(nodeTable -> nodeTable.setTime(System.currentTimeMillis())).collect(Collectors.toList()));
+        nodeTableList.forEach(nodeTable ->
+                this.nodeTable.put(nodeTable.getNid(), new NodeTable(nodeTable.getNid(), nodeTable.getIp(),
+                        nodeTable.getPort(), System.currentTimeMillis()))
+        );
+
     }
 
     private void responseError(BEncodedValue data) throws InvalidBEncodingException {

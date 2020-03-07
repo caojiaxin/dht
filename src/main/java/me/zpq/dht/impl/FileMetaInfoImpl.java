@@ -59,10 +59,8 @@ public class FileMetaInfoImpl implements MetaInfo {
     public void todoSomething(byte[] info) throws IOException {
 
         byte[] sha1 = DigestUtils.sha1(info);
-        String hex = Utils.bytesToHex(sha1);
         if (this.isExist(sha1)) {
 
-            System.out.println("sha1: " + hex + "is exist");
             return;
         }
         String date = LocalDate.now().format(FORMATTER);
@@ -71,6 +69,7 @@ public class FileMetaInfoImpl implements MetaInfo {
 
             Files.createDirectories(Paths.get(dir));
         }
+        String hex = Utils.bytesToHex(sha1);
         String fileName = hex + FILE_EXT;
         BEncodedValue decode = BDecoder.decode(new ByteArrayInputStream(info));
         Document metaInfo = new Document();

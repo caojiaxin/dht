@@ -76,27 +76,27 @@ public class Main {
 
         Bootstrap bootstrap = new Bootstrap();
         byte[] nodeId = Utils.nodeId();
-        Set<NodeTable> nodeTables = new HashSet<>(6);
-        nodeTables.add(new NodeTable(Utils.bytesToHex(nodeId), host, port, System.currentTimeMillis()));
+        Map<String, NodeTable> table = new Hashtable<>();
+        table.put(new String(nodeId), new NodeTable(Utils.bytesToHex(nodeId), host, port, System.currentTimeMillis()));
         MetaInfo metaInfo = new FileMetaInfoImpl(mongoClient);
         EventLoopGroup group = new NioEventLoopGroup();
         bootstrap.group(group)
                 .channel(NioDatagramChannel.class)
                 .option(ChannelOption.SO_BROADCAST, true)
-                .handler(new DiscardServerHandler(nodeTables, nodeId, maxNodes, metadata));
+                .handler(new DiscardServerHandler(table, nodeId, maxNodes, metadata));
         final Channel channel = bootstrap.bind(port).sync().channel();
 
         ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(5);
         LOGGER.info("start autoFindNode");
-        scheduledExecutorService.scheduleWithFixedDelay(new FindNode(channel, transactionId, nodeId, nodeTables, minNodes), findNodeInterval, findNodeInterval, TimeUnit.SECONDS);
+        scheduledExecutorService.scheduleWithFixedDelay(new FindNode(channel, transactionId, nodeId, table, minNodes), findNodeInterval, findNodeInterval, TimeUnit.SECONDS);
         LOGGER.info("start ok autoFindNode");
 
         LOGGER.info("start Ping");
-        scheduledExecutorService.scheduleWithFixedDelay(new Ping(channel, transactionId, nodeId, nodeTables), pingInterval, pingInterval, TimeUnit.SECONDS);
+        scheduledExecutorService.scheduleWithFixedDelay(new Ping(channel, transactionId, nodeId, table), pingInterval, pingInterval, TimeUnit.SECONDS);
         LOGGER.info("start ok Ping");
 
         LOGGER.info("start RemoveNode");
-        scheduledExecutorService.scheduleWithFixedDelay(new RemoveNode(nodeTables, timeout), removeNodeInterval, removeNodeInterval, TimeUnit.SECONDS);
+        scheduledExecutorService.scheduleWithFixedDelay(new RemoveNode(table, timeout), removeNodeInterval, removeNodeInterval, TimeUnit.SECONDS);
         LOGGER.info("start ok RemoveNode");
 
         LOGGER.info("start peerRequestTask");

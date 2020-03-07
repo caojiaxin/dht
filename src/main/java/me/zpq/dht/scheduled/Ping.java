@@ -5,6 +5,8 @@ import io.netty.channel.Channel;
 import io.netty.channel.socket.DatagramPacket;
 import me.zpq.dht.protocol.DhtProtocol;
 import me.zpq.dht.model.NodeTable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -15,6 +17,8 @@ import java.util.Map;
  * @date 2019-08-29
  */
 public class Ping implements Runnable {
+
+    private static final Logger log = LoggerFactory.getLogger(Ping.class);
 
     private Channel channel;
 
@@ -41,7 +45,8 @@ public class Ping implements Runnable {
                 channel.writeAndFlush(new DatagramPacket(Unpooled.copiedBuffer(DhtProtocol.pingQuery(transactionId, nodeId)),
                         new InetSocketAddress(nodeTable.getIp(), nodeTable.getPort())));
             } catch (IOException e) {
-                e.printStackTrace();
+
+                log.error("ping", e);
             }
         });
     }

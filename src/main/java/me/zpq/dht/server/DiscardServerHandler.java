@@ -28,7 +28,7 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class DiscardServerHandler extends SimpleChannelInboundHandler<DatagramPacket> {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DiscardServerHandler.class);
+    private static final Logger log = LoggerFactory.getLogger(DiscardServerHandler.class);
 
     private byte[] nodeId;
 
@@ -123,7 +123,7 @@ public class DiscardServerHandler extends SimpleChannelInboundHandler<DatagramPa
 
         } catch (Exception e) {
 
-            // nothing to do
+            log.error(e.getMessage(), e);
         }
 
     }
@@ -238,7 +238,7 @@ public class DiscardServerHandler extends SimpleChannelInboundHandler<DatagramPa
 
         List<BEncodedValue> e = data.getMap().get(DhtProtocol.E).getList();
 
-        LOGGER.error(" r : error Code: {} , Description: {}", e.get(0).getInt(), e.get(1).getString());
+        log.error(" r : error Code: {} , Description: {}", e.get(0).getInt(), e.get(1).getString());
 
     }
 
@@ -253,14 +253,14 @@ public class DiscardServerHandler extends SimpleChannelInboundHandler<DatagramPa
 
         if (needValidatorToken.length != token.length) {
 
-            LOGGER.error("announcePeer validator false length not eq length: {} ", needValidatorToken.length);
+            log.error("announcePeer validator false length not eq length: {} ", needValidatorToken.length);
             return false;
         }
         for (int i = 0; i < token.length; i++) {
 
             if (token[i] != needValidatorToken[i]) {
 
-                LOGGER.error("announcePeer validator false token not eq ");
+                log.error("announcePeer validator false token not eq ");
                 return false;
             }
         }

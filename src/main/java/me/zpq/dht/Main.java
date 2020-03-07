@@ -38,7 +38,7 @@ import java.util.concurrent.*;
  */
 public class Main {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
+    private static final Logger log = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) throws InterruptedException, IOException {
 
@@ -47,7 +47,7 @@ public class Main {
         Path configFile = Paths.get(dir + "/config.properties");
         if (!Files.exists(configFile)) {
 
-            LOGGER.error("error config");
+            log.error("error config");
             return;
         }
         LinkedBlockingQueue<String> metadata = new LinkedBlockingQueue<>();
@@ -87,32 +87,32 @@ public class Main {
         final Channel channel = bootstrap.bind(port).sync().channel();
 
         ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(5);
-        LOGGER.info("start autoFindNode");
+        log.info("start autoFindNode");
         scheduledExecutorService.scheduleWithFixedDelay(new FindNode(channel, transactionId, nodeId, table, minNodes), findNodeInterval, findNodeInterval, TimeUnit.SECONDS);
-        LOGGER.info("start ok autoFindNode");
+        log.info("start ok autoFindNode");
 
-        LOGGER.info("start Ping");
+        log.info("start Ping");
         scheduledExecutorService.scheduleWithFixedDelay(new Ping(channel, transactionId, nodeId, table), pingInterval, pingInterval, TimeUnit.SECONDS);
-        LOGGER.info("start ok Ping");
+        log.info("start ok Ping");
 
-        LOGGER.info("start RemoveNode");
+        log.info("start RemoveNode");
         scheduledExecutorService.scheduleWithFixedDelay(new RemoveNode(table, timeout), removeNodeInterval, removeNodeInterval, TimeUnit.SECONDS);
-        LOGGER.info("start ok RemoveNode");
+        log.info("start ok RemoveNode");
 
-        LOGGER.info("start peerRequestTask");
+        log.info("start peerRequestTask");
         ThreadFactory threadFactory = Executors.defaultThreadFactory();
         ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(corePoolSize, maximumPoolSize,
                 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), threadFactory);
         scheduledExecutorService.scheduleAtFixedRate(new Peer(threadPoolExecutor, metaInfo, metadata), peerRequestInterval, peerRequestInterval, TimeUnit.SECONDS);
-        LOGGER.info("start ok peerRequestTask");
-        LOGGER.info("server ok");
+        log.info("start ok peerRequestTask");
+        log.info("server ok");
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
 
             mongoClient.close();
             threadPoolExecutor.shutdown();
             scheduledExecutorService.shutdown();
             group.shutdownGracefully();
-            LOGGER.info("server shutdown");
+            log.info("server shutdown");
         }));
     }
 

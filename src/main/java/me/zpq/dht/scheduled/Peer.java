@@ -15,7 +15,7 @@ import java.util.concurrent.ThreadPoolExecutor;
  */
 public class Peer implements Runnable {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Peer.class);
+    private static final Logger log = LoggerFactory.getLogger(Peer.class);
 
     private ThreadPoolExecutor threadPoolExecutor;
 
@@ -37,7 +37,7 @@ public class Peer implements Runnable {
             return;
         }
 
-        LOGGER.info("linkedBlockQueue len {}", metadata.size());
+        log.info("linkedBlockQueue len {}", metadata.size());
 
         String metaInfo = metadata.poll();
         if (metaInfo == null) {
@@ -52,7 +52,7 @@ public class Peer implements Runnable {
         threadPoolExecutor.execute(() -> {
 
             PeerClient peerClient = new PeerClient(ip, port, infoHash);
-            LOGGER.info("todo request peerClient ......");
+            log.info("todo request peerClient ......");
             byte[] metadata = peerClient.request();
             if (metadata != null) {
 
@@ -62,8 +62,7 @@ public class Peer implements Runnable {
 
                 } catch (Exception e) {
 
-                    LOGGER.error("mongoMetaInfo error: {}", e.getMessage());
-
+                    log.error("mongoMetaInfo error", e);
                 }
             }
         });

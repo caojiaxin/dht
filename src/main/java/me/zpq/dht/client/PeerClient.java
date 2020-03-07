@@ -18,7 +18,7 @@ import java.util.Map;
 
 public class PeerClient {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(PeerClient.class);
+    private static final Logger log = LoggerFactory.getLogger(PeerClient.class);
 
     /**
      * @see <a href="http://www.bittorrent.org/beps/bep_0020.html">Peer ID Conventions</>
@@ -63,17 +63,17 @@ public class PeerClient {
             socket.setSoTimeout(READ_TIMEOUT);
             socket.setTcpNoDelay(true);
             socket.setKeepAlive(true);
-            LOGGER.info("connect server host: {} port: {} hash: {}", host, port, Utils.bytesToHex(this.infoHash));
+            log.info("connect server host: {} port: {} hash: {}", host, port, Utils.bytesToHex(this.infoHash));
             socket.connect(new InetSocketAddress(host, port), CONNECT_TIMEOUT);
             OutputStream outputStream = socket.getOutputStream();
             InputStream inputStream = socket.getInputStream();
-            LOGGER.info("try to handshake");
+            log.info("try to handshake");
             this.handshake(outputStream);
             if (!this.validatorHandshake(inputStream)) {
 
                 return null;
             }
-            LOGGER.info("try to extHandShake");
+            log.info("try to extHandShake");
             this.extHandShake(outputStream);
             BEncodedValue bEncodedValue = this.validatorExtHandShake(inputStream);
             if (bEncodedValue == null) {
@@ -83,11 +83,11 @@ public class PeerClient {
             int utMetadata = bEncodedValue.getMap().get(M).getMap().get(UT_METADATA).getInt();
             int metaDataSize = bEncodedValue.getMap().get(METADATA_SIZE).getInt();
             int block = metaDataSize % BLOCK_SIZE > 0 ? metaDataSize / BLOCK_SIZE + 1 : metaDataSize / BLOCK_SIZE;
-            LOGGER.info("metaDataSize: {} block: {}", metaDataSize, block);
+            log.info("metaDataSize: {} block: {}", metaDataSize, block);
             for (int i = 0; i < block; i++) {
 
                 this.metadataRequest(outputStream, utMetadata, i);
-                LOGGER.info("request block index: {} ok", i);
+                log.info("request block index: {} ok", i);
             }
             ByteBuffer metaInfo = ByteBuffer.allocate(metaDataSize);
             for (int i = 0; i < block; i++) {
@@ -100,29 +100,29 @@ public class PeerClient {
                 byte[] length = this.resolveLengthMessage(inputStream, 4);
                 byte[] result = this.resolveLengthMessage(inputStream, byte2int(length));
                 metaInfo.put(Arrays.copyOfRange(result, response.length + 2, result.length));
-                LOGGER.info("resolve block index: {} ok", i);
+                log.info("resolve block index: {} ok", i);
             }
-            LOGGER.info("validator sha1");
+            log.info("validator sha1");
             byte[] info = metaInfo.array();
             byte[] sha1 = DigestUtils.sha1(info);
             if (sha1.length != infoHash.length) {
 
-                LOGGER.error("length fail");
+                log.error("length fail");
                 return null;
             }
             for (int i = 0; i < infoHash.length; i++) {
 
                 if (infoHash[i] != sha1[i]) {
 
-                    LOGGER.error("info hash not eq");
+                    log.error("info hash not eq");
                     return null;
                 }
             }
-            LOGGER.info("success");
+            log.info("success");
             return info;
         } catch (Exception e) {
 
-            LOGGER.error("{} : {}", e.getClass().getName(), e.getMessage());
+            log.error("{} : {}", e.getClass().getName(), e.getMessage());
             return null;
         }
 
@@ -146,21 +146,21 @@ public class PeerClient {
         byte[] bitTorrent = this.resolveMessage(inputStream);
         if (!PROTOCOL.equals(new String(bitTorrent))) {
 
-            LOGGER.error("protocol != BitTorrent, protocol: {}", new String(bitTorrent));
+            log.error("protocol != BitTorrent, protocol: {}", new String(bitTorrent));
             return false;
         }
         byte[] last = this.resolveLengthMessage(inputStream, 48);
         byte[] infoHash = Arrays.copyOfRange(last, 8, 28);
         if (infoHash.length != this.infoHash.length) {
 
-            LOGGER.error("info hash length is diff");
+            log.error("info hash length is diff");
             return false;
         }
         for (int i = 0; i < 20; i++) {
 
             if (infoHash[i] != this.infoHash[i]) {
 
-                LOGGER.error("info hash byte is diff");
+                log.error("info hash byte is diff");
                 return false;
             }
         }
@@ -186,34 +186,34 @@ public class PeerClient {
         int messageType = data[1];
         if (messageId != 20) {
 
-            LOGGER.error("want to get messageId 20 but messageId: {}", messageId);
+            log.error("want to get messageId 20 but messageId: {}", messageId);
             return null;
         }
         if (messageType != 0) {
 
-            LOGGER.error("want to get messageType 0 but messageType: {}", messageType);
+            log.error("want to get messageType 0 but messageType: {}", messageType);
             return null;
         }
         byte[] bDecode = Arrays.copyOfRange(data, 2, length);
         BEncodedValue decode = BDecoder.decode(new ByteArrayInputStream(bDecode));
         if (decode.getMap().get(METADATA_SIZE) == null) {
 
-            LOGGER.error("metadata_size == null");
+            log.error("metadata_size == null");
             return null;
         }
         if (decode.getMap().get(METADATA_SIZE).getInt() <= 0) {
 
-            LOGGER.error("metadata_size <= 0");
+            log.error("metadata_size <= 0");
             return null;
         }
         if (decode.getMap().get(M) == null) {
 
-            LOGGER.error("m == null");
+            log.error("m == null");
             return null;
         }
         if (decode.getMap().get(M).getMap().get(UT_METADATA) == null) {
 
-            LOGGER.error("m.ut_metadata == null");
+            log.error("m.ut_metadata == null");
             return null;
         }
         while (inputStream.available() > 0) {

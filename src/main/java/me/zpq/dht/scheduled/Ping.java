@@ -8,7 +8,8 @@ import me.zpq.dht.model.NodeTable;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.Map;
+import java.util.Collections;
+import java.util.Set;
 
 /**
  * @author zpq
@@ -18,16 +19,16 @@ public class Ping implements Runnable {
 
     private Channel channel;
 
-    private Map<String, NodeTable> table;
+    private Set<NodeTable> nodeTables;
 
     private byte[] transactionId;
 
     private byte[] nodeId;
 
-    public Ping(Channel channel, byte[] transactionId, byte[] nodeId, Map<String, NodeTable> table) {
+    public Ping(Channel channel, byte[] transactionId, byte[] nodeId, Set<NodeTable> nodeTables) {
 
         this.channel = channel;
-        this.table = table;
+        this.nodeTables = nodeTables;
         this.transactionId = transactionId;
         this.nodeId = nodeId;
     }
@@ -35,7 +36,8 @@ public class Ping implements Runnable {
     @Override
     public void run() {
 
-        table.values().forEach(nodeTable -> {
+        Set<NodeTable> nodeTableSet = Collections.synchronizedSet(nodeTables);
+        nodeTableSet.forEach(nodeTable -> {
 
             try {
                 channel.writeAndFlush(new DatagramPacket(Unpooled.copiedBuffer(DhtProtocol.pingQuery(transactionId, nodeId)),

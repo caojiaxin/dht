@@ -10,9 +10,7 @@ import me.zpq.dht.model.NodeTable;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class FindNode implements Runnable {
 
@@ -22,17 +20,17 @@ public class FindNode implements Runnable {
 
     private byte[] nodeId;
 
-    private Map<String, NodeTable> tableMap;
+    private Set<NodeTable> nodeTables;
 
     private int minNodes;
 
     private List<BootstrapAddress> list = new ArrayList<>();
 
-    public FindNode(Channel channel, byte[] transactionId, byte[] nodeId, Map<String, NodeTable> tableMap, int minNodes) {
+    public FindNode(Channel channel, byte[] transactionId, byte[] nodeId, Set<NodeTable> nodeTables, int minNodes) {
         this.channel = channel;
         this.transactionId = transactionId;
         this.nodeId = nodeId;
-        this.tableMap = tableMap;
+        this.nodeTables = nodeTables;
         this.minNodes = minNodes;
         list.add(new BootstrapAddress("router.bittorrent.com", 6881));
         list.add(new BootstrapAddress("router.utorrent.com", 6881));
@@ -42,7 +40,8 @@ public class FindNode implements Runnable {
     @Override
     public void run() {
 
-        if (tableMap.size() >= minNodes) {
+        Set<NodeTable> nodeTableSet = Collections.synchronizedSet(nodeTables);
+        if (nodeTableSet.size() >= minNodes) {
 
             return;
         }

@@ -1,5 +1,7 @@
 package me.zpq.dht.model;
 
+import java.util.Objects;
+
 /**
  * @author zpq
  * @date 2019-08-26
@@ -54,5 +56,25 @@ public class NodeTable {
 
     public void setTime(long time) {
         this.time = time;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        NodeTable nodeTable = (NodeTable) o;
+        return port == nodeTable.port &&
+                time == nodeTable.time &&
+                nid.equals(nodeTable.nid) &&
+                ip.equals(nodeTable.ip);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(nid, ip, port, time);
     }
 }

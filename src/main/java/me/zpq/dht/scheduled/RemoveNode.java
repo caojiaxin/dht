@@ -2,29 +2,33 @@ package me.zpq.dht.scheduled;
 
 import me.zpq.dht.model.NodeTable;
 
+import java.util.Collections;
 import java.util.Iterator;
-import java.util.Map;
+import java.util.Set;
 
 public class RemoveNode implements Runnable {
 
-    private Map<String, NodeTable> table;
+    private Set<NodeTable> nodeTables;
 
     private long timeout;
 
-    public RemoveNode(Map<String, NodeTable> table, long timeout) {
+    public RemoveNode(Set<NodeTable> nodeTables, long timeout) {
 
-        this.table = table;
+        this.nodeTables = nodeTables;
         this.timeout = timeout;
     }
 
     @Override
     public void run() {
 
-        Iterator<Map.Entry<String, NodeTable>> iterator = table.entrySet().iterator();
+        Set<NodeTable> nodeTableSet = Collections.synchronizedSet(nodeTables);
+
+        Iterator<NodeTable> iterator = nodeTableSet.iterator();
+
         while (iterator.hasNext()) {
 
-            Map.Entry<String, NodeTable> next = iterator.next();
-            long diff = System.currentTimeMillis() - next.getValue().getTime();
+            NodeTable next = iterator.next();
+            long diff = System.currentTimeMillis() - next.getTime();
             if (diff > timeout) {
 
                 iterator.remove();

@@ -76,8 +76,8 @@ public class Main {
 
         Bootstrap bootstrap = new Bootstrap();
         byte[] nodeId = Utils.nodeId();
-        Map<String, NodeTable> table = new Hashtable<>();
-        table.put(new String(nodeId), new NodeTable(Utils.bytesToHex(nodeId), host, port, System.currentTimeMillis()));
+        Map<String, NodeTable> table = new ConcurrentHashMap<>(6);
+        table.put(Utils.bytesToHex(nodeId), new NodeTable(Utils.bytesToHex(nodeId), host, port, System.currentTimeMillis()));
         MetaInfo metaInfo = new FileMetaInfoImpl(mongoClient);
         EventLoopGroup group = new NioEventLoopGroup();
         bootstrap.group(group)

@@ -257,17 +257,15 @@ public class DiscardServerHandler extends SimpleChannelInboundHandler<DatagramPa
 
     private void saveNodeTable(String id, String ip, int port) {
 
-        log.info("saveNodeTable");
         if (nodeTableMap.containsKey(id)) {
 
             nodeTableMap.put(id, new NodeTable(id, ip, port, System.currentTimeMillis()));
-            log.info("nodeTableMap.containsKey true updated");
+
             return;
         }
         int size = nodeTableMap.size();
         if (size >= maxNodes) {
 
-            log.info("nodeTableMap size: {} >= maxNodes size: {} not create", size, maxNodes);
             return;
         }
         nodeTableMap.put(id, new NodeTable(id, ip, port, System.currentTimeMillis()));

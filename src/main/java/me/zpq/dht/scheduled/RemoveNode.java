@@ -13,7 +13,7 @@ public class RemoveNode implements Runnable {
 
     private long timeout;
 
-    public RemoveNode(Map<String, NodeTable> table, int minNodes ,long timeout) {
+    public RemoveNode(Map<String, NodeTable> table, int minNodes, long timeout) {
 
         this.table = table;
         this.minNodes = minNodes;

@@ -96,7 +96,7 @@ public class Main {
 //        log.info("start ok GetPeers");
 
         log.info("start RemoveNode");
-        scheduledExecutorService.scheduleWithFixedDelay(new RemoveNode(table, timeout), removeNodeInterval, removeNodeInterval, TimeUnit.SECONDS);
+        scheduledExecutorService.scheduleWithFixedDelay(new RemoveNode(table,minNodes, timeout), removeNodeInterval, removeNodeInterval, TimeUnit.SECONDS);
         log.info("start ok RemoveNode");
 
         log.info("start peerRequestTask");

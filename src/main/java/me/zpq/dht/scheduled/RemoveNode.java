@@ -9,17 +9,24 @@ public class RemoveNode implements Runnable {
 
     private Map<String, NodeTable> table;
 
+    private int minNodes;
+
     private long timeout;
 
-    public RemoveNode(Map<String, NodeTable> table, long timeout) {
+    public RemoveNode(Map<String, NodeTable> table, int minNodes ,long timeout) {
 
         this.table = table;
+        this.minNodes = minNodes;
         this.timeout = timeout;
     }
 
     @Override
     public void run() {
 
+        if (this.table.size() < minNodes) {
+
+            return;
+        }
         Iterator<Map.Entry<String, NodeTable>> iterator = table.entrySet().iterator();
         while (iterator.hasNext()) {
 

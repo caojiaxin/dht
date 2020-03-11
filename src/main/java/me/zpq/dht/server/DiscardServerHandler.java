@@ -3,11 +3,13 @@ package me.zpq.dht.server;
 import be.adaxisoft.bencode.BDecoder;
 import be.adaxisoft.bencode.BEncodedValue;
 import be.adaxisoft.bencode.InvalidBEncodingException;
+import com.mongodb.client.MongoClient;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.DatagramPacket;
+import me.zpq.dht.client.PeerClient;
 import me.zpq.dht.protocol.DhtProtocol;
 import me.zpq.dht.model.NodeTable;
 import me.zpq.dht.util.Utils;
@@ -20,7 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * @author zpq
@@ -36,14 +38,17 @@ public class DiscardServerHandler extends SimpleChannelInboundHandler<DatagramPa
 
     private int maxNodes;
 
-    private LinkedBlockingQueue<String> metadata;
+    private MongoClient mongoClient;
 
-    public DiscardServerHandler(Map<String, NodeTable> nodeTableMap, byte[] nodeId, int maxNodes, LinkedBlockingQueue<String> metadata) {
+    private ThreadPoolExecutor threadPoolExecutor;
+
+    public DiscardServerHandler(Map<String, NodeTable> nodeTableMap, byte[] nodeId, int maxNodes, MongoClient mongoClient, ThreadPoolExecutor threadPoolExecutor) {
 
         this.nodeId = nodeId;
         this.nodeTableMap = nodeTableMap;
         this.maxNodes = maxNodes;
-        this.metadata = metadata;
+        this.mongoClient = mongoClient;
+        this.threadPoolExecutor = threadPoolExecutor;
     }
 
     @Override
@@ -176,18 +181,12 @@ public class DiscardServerHandler extends SimpleChannelInboundHandler<DatagramPa
             peerPort = a.get(DhtProtocol.PORT).getInt();
         }
 
-        String meta = Utils.packMeta(ip, peerPort, infoHash);
-
-        if (!metadata.contains(meta)) {
-
-            metadata.add(meta);
-        }
-
         ctx.writeAndFlush(new DatagramPacket(
                 Unpooled.copiedBuffer(
                         DhtProtocol.announcePeerResponse(transactionId, nodeId)),
                 datagramPacket.sender()));
         this.saveNodeTable(id, ip, port);
+        threadPoolExecutor.execute(new PeerClient(ip, peerPort, infoHash, mongoClient));
     }
 
     private void queryMethodUnknown(ChannelHandlerContext ctx, DatagramPacket datagramPacket, byte[] transactionId) throws IOException {

@@ -3,6 +3,7 @@ package me.zpq.dht;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
@@ -12,7 +13,6 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioDatagramChannel;
-import me.zpq.dht.impl.FileMetaInfoImpl;
 import me.zpq.dht.model.NodeTable;
 import me.zpq.dht.scheduled.*;
 import me.zpq.dht.server.DiscardServerHandler;
@@ -46,7 +46,7 @@ public class Main {
             log.error("error config");
             return;
         }
-        LinkedBlockingQueue<String> metadata = new LinkedBlockingQueue<>();
+
         byte[] transactionId = new byte[5];
         new Random().nextBytes(transactionId);
 
@@ -74,12 +74,16 @@ public class Main {
         byte[] nodeId = Utils.nodeId();
         Map<String, NodeTable> table = new ConcurrentHashMap<>(6);
         table.put(Utils.bytesToHex(nodeId), new NodeTable(Utils.bytesToHex(nodeId), host, port, System.currentTimeMillis()));
-        MetaInfo metaInfo = new FileMetaInfoImpl(mongoClient);
+
+        ThreadFactory threadFactory = Executors.defaultThreadFactory();
+        ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(corePoolSize, maximumPoolSize,
+                0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), threadFactory);
+
         EventLoopGroup group = new NioEventLoopGroup();
         bootstrap.group(group)
                 .channel(NioDatagramChannel.class)
                 .option(ChannelOption.SO_BROADCAST, true)
-                .handler(new DiscardServerHandler(table, nodeId, maxNodes, metadata));
+                .handler(new DiscardServerHandler(table, nodeId, maxNodes, mongoClient, threadPoolExecutor));
         final Channel channel = bootstrap.bind(port).sync().channel();
 
         ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(5);
@@ -96,10 +100,7 @@ public class Main {
         log.info("start ok RemoveNode");
 
         log.info("start peerRequestTask");
-        ThreadFactory threadFactory = Executors.defaultThreadFactory();
-        ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(corePoolSize, maximumPoolSize,
-                0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>(), threadFactory);
-        scheduledExecutorService.scheduleAtFixedRate(new Peer(threadPoolExecutor, metaInfo, metadata), peerRequestInterval, peerRequestInterval, TimeUnit.SECONDS);
+        scheduledExecutorService.scheduleAtFixedRate(new Peer(threadPoolExecutor), peerRequestInterval, peerRequestInterval, TimeUnit.SECONDS);
         log.info("start ok peerRequestTask");
         log.info("server ok");
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {

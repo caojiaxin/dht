@@ -163,19 +163,20 @@ public class DiscardServerHandler extends SimpleChannelInboundHandler<DatagramPa
         // ip
         String ip = datagramPacket.sender().getAddress().getHostAddress();
 
+        int port = datagramPacket.sender().getPort();
         // port
-        int port;
+        int peerPort;
 
         if (a.get(DhtProtocol.IMPLIED_PORT) != null && a.get(DhtProtocol.IMPLIED_PORT).getInt() != 0) {
 
-            port = datagramPacket.sender().getPort();
+            peerPort = port;
 
         } else {
 
-            port = a.get(DhtProtocol.PORT).getInt();
+            peerPort = a.get(DhtProtocol.PORT).getInt();
         }
 
-        String meta = Utils.packMeta(ip, port, infoHash);
+        String meta = Utils.packMeta(ip, peerPort, infoHash);
 
         if (!metadata.contains(meta)) {
 

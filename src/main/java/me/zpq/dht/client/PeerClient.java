@@ -6,7 +6,6 @@ import be.adaxisoft.bencode.BEncoder;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
 import me.zpq.dht.util.Utils;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.bson.*;
@@ -101,6 +100,10 @@ public class PeerClient implements Runnable {
     @Override
     public void run() {
 
+        if (this.isExist(this.infoHash)) {
+
+            return;
+        }
         try (Socket socket = new Socket()) {
             socket.setSoTimeout(READ_TIMEOUT);
             socket.setTcpNoDelay(true);

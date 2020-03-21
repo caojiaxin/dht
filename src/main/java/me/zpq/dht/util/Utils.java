@@ -91,7 +91,7 @@ public class Utils {
         return sb.toString();
     }
 
-    public static byte[] hexToByte(String hex) {
+    private static byte[] hexToByte(String hex) {
 
         int m, n;
         int byteLen = hex.length() / 2;

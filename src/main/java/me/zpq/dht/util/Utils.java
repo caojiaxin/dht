@@ -105,13 +105,4 @@ public class Utils {
         return ret;
     }
 
-    public static String packMeta(String host, int port, byte[] infoHash) {
-
-        return String.join(":", host, bytesToHex(infoHash), String.valueOf(port));
-    }
-
-    public static String[] unpackMeta(String string) {
-
-        return string.split(":", 3);
-    }
 }
